@@ -55,3 +55,9 @@ The spec must include:
 - Open questions, if any
 - If there are no open questions, write `None`.
 - The spec must be ready for approval before implementation.
+- Keep the spec short.
+- Do not repeat constitution rules.
+- Do not repeat AGENTS.md rules.
+- Include only feature-specific requirements.
+- Do not create broad or generic sections.
+- Read only the files directly needed for this spec.

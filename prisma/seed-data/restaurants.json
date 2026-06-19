@@ -1,0 +1,664 @@
+[
+  {
+    "id": 1,
+    "name": "Mission Chinese Food",
+    "neighborhood": "Manhattan",
+    "photograph": "1.jpg",
+    "address": "171 E Broadway, New York, NY 10002",
+    "latlng": {
+      "lat": 40.713829,
+      "lng": -73.989667
+    },
+    "image": "https://video-images.vice.com/articles/590647db9ac0f921f03ed8d9/lede/1493583856927-mcf_halloween_017.jpeg?crop=1xw:0.8439609902475619xh;center,center&resize=1200:*",
+    "cuisine_type": "Asian",
+    "description": "A bold, energetic restaurant known for creative Chinese-American dishes, family-style menus, and a lively dining room.",
+    "capacity": 72,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 8,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "13:00", "reservedSeats": 8 },
+        { "date": "2026-07-10", "time": "13:30", "reservedSeats": 3 },
+        { "date": "2026-07-10", "time": "20:00", "reservedSeats": 6 },
+        { "date": "2026-07-11", "time": "21:30", "reservedSeats": 8 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "5:30 pm - 11:00 pm",
+      "Tuesday": "5:30 pm - 12:00 am",
+      "Wednesday": "5:30 pm - 12:00 am",
+      "Thursday": "5:30 pm - 12:00 am",
+      "Friday": "5:30 pm - 12:00 am",
+      "Saturday": "12:00 pm - 4:00 pm, 5:30 pm - 12:00 am",
+      "Sunday": "12:00 pm - 4:00 pm, 5:30 pm - 11:00 pm"
+    },
+    "comments": [
+      {
+        "id": 101,
+        "restaurantId": 1,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "Mission Chinese Food has grown up from its scrappy Orchard Street days into a big, two story restaurant with a broader menu and plenty of classics."
+      },
+      {
+        "id": 102,
+        "restaurantId": 1,
+        "userId": 2,
+        "name": "Morgan",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "This place is a blast. The kung pao pastrami and spicy ma po tofu were memorable, and it is a great option for groups."
+      },
+      {
+        "id": 103,
+        "restaurantId": 1,
+        "userId": 3,
+        "name": "Jason",
+        "date": "2016-10-26",
+        "rating": 3,
+        "body": "The atmosphere delivered, but the food was uneven for me. Still worth trying if you are curious about the hype."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Emily",
+    "neighborhood": "Brooklyn",
+    "photograph": "2.jpg",
+    "address": "919 Fulton St, Brooklyn, NY 11238",
+    "latlng": {
+      "lat": 40.683555,
+      "lng": -73.966393
+    },
+    "image": "https://media-cdn.tripadvisor.com/media/photo-s/17/07/cd/40/the-colony-and-vodka.jpg",
+    "cuisine_type": "Pizza",
+    "description": "A cosy Brooklyn pizza restaurant serving wood-fired pies, salads, starters, and a well-known burger.",
+    "capacity": 48,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 6,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "14:00", "reservedSeats": 6 },
+        { "date": "2026-07-10", "time": "20:30", "reservedSeats": 2 },
+        { "date": "2026-07-12", "time": "22:00", "reservedSeats": 5 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "5:30 pm - 11:00 pm",
+      "Tuesday": "5:30 pm - 11:00 pm",
+      "Wednesday": "5:30 pm - 11:00 pm",
+      "Thursday": "5:30 pm - 11:00 pm",
+      "Friday": "5:30 pm - 11:00 pm",
+      "Saturday": "5:00 pm - 11:30 pm",
+      "Sunday": "12:00 pm - 3:00 pm, 5:00 pm - 11:00 pm"
+    },
+    "comments": [
+      {
+        "id": 201,
+        "restaurantId": 2,
+        "userId": 4,
+        "name": "Steph",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "Five star food, two star atmosphere. I would definitely get takeout from this place again."
+      },
+      {
+        "id": 202,
+        "restaurantId": 2,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "This Clinton Hill restaurant excels at straightforward and unusual wood-fired pizzas. The Emily is worth ordering."
+      },
+      {
+        "id": 203,
+        "restaurantId": 2,
+        "userId": 5,
+        "name": "Sam",
+        "date": "2016-10-26",
+        "rating": 5,
+        "body": "Great atmosphere and excellent food. The Emmy burger and Colony pizza are both memorable."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Kang Ho Dong Baekjeong",
+    "neighborhood": "Manhattan",
+    "photograph": "3.jpg",
+    "address": "1 E 32nd St, New York, NY 10016",
+    "latlng": {
+      "lat": 40.747143,
+      "lng": -73.985414
+    },
+    "image": "https://media-cdn.tripadvisor.com/media/photo-s/06/da/d6/de/kang-hodong-baekjeong.jpg",
+    "cuisine_type": "Asian",
+    "description": "A Korean BBQ restaurant with tabletop grills, generous sides, and a menu built for groups and birthdays.",
+    "capacity": 90,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 10,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "13:00", "reservedSeats": 4 },
+        { "date": "2026-07-10", "time": "20:00", "reservedSeats": 10 },
+        { "date": "2026-07-10", "time": "20:30", "reservedSeats": 7 },
+        { "date": "2026-07-13", "time": "21:00", "reservedSeats": 10 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "11:30 am - 2:00 am",
+      "Tuesday": "11:30 am - 2:00 am",
+      "Wednesday": "11:30 am - 2:00 am",
+      "Thursday": "11:30 am - 2:00 am",
+      "Friday": "11:30 am - 6:00 am",
+      "Saturday": "11:30 am - 6:00 am",
+      "Sunday": "11:30 am - 2:00 am"
+    },
+    "comments": [
+      {
+        "id": 301,
+        "restaurantId": 3,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "The tables are outfitted with grills for short ribs, brisket, beef tongue, rib eye, and pork jowl. Great for large groups."
+      },
+      {
+        "id": 302,
+        "restaurantId": 3,
+        "userId": 6,
+        "name": "ZS",
+        "date": "2016-10-26",
+        "rating": 5,
+        "body": "The beef was juicy, tender and so good. The sides were excellent and the portions were generous."
+      },
+      {
+        "id": 303,
+        "restaurantId": 3,
+        "userId": 7,
+        "name": "Emily",
+        "date": "2016-10-26",
+        "rating": 2,
+        "body": "I have tried their Jersey location as well, but the meat quality felt disappointing this time."
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Katz's Delicatessen",
+    "neighborhood": "Manhattan",
+    "photograph": "4.jpg",
+    "address": "205 E Houston St, New York, NY 10002",
+    "latlng": {
+      "lat": 40.722216,
+      "lng": -73.987501
+    },
+    "image": "https://www.livingfla.com/wp-content/uploads/2019/04/katz-1-500.jpg",
+    "cuisine_type": "American",
+    "description": "A classic New York delicatessen famous for pastrami, rye bread, large sandwiches, and counter service.",
+    "capacity": 120,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 12,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "13:30", "reservedSeats": 12 },
+        { "date": "2026-07-10", "time": "14:00", "reservedSeats": 9 },
+        { "date": "2026-07-11", "time": "20:30", "reservedSeats": 12 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "8:00 am - 10:30 pm",
+      "Tuesday": "8:00 am - 10:30 pm",
+      "Wednesday": "8:00 am - 10:30 pm",
+      "Thursday": "8:00 am - 2:30 am",
+      "Friday": "8:00 am - Sat",
+      "Saturday": "Open 24 hours",
+      "Sunday": "Sat - 10:30 pm"
+    },
+    "comments": [
+      {
+        "id": 401,
+        "restaurantId": 4,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 5,
+        "body": "Katz's remains one of New York's essential Jewish delicatessens. The sandwiches are massive and best shared."
+      },
+      {
+        "id": 402,
+        "restaurantId": 4,
+        "userId": 8,
+        "name": "Allen",
+        "date": "2016-10-26",
+        "rating": 5,
+        "body": "These guys know how to make a sandwich. First pit-stop when I come back to NYC."
+      },
+      {
+        "id": 403,
+        "restaurantId": 4,
+        "userId": 9,
+        "name": "David",
+        "date": "2016-10-26",
+        "rating": 2,
+        "body": "It is iconic, but expensive and crowded. I would rather take a quick look and eat somewhere nearby."
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Roberta's Pizza",
+    "neighborhood": "Brooklyn",
+    "photograph": "5.jpg",
+    "address": "261 Moore St, Brooklyn, NY 11206",
+    "latlng": {
+      "lat": 40.705089,
+      "lng": -73.933585
+    },
+    "image": "https://c8.alamy.com/compes/dp9a5f/robertas-pizza-restaurant-en-east-williamsburg-de-brooklyn-dp9a5f.jpg",
+    "cuisine_type": "Pizza",
+    "description": "A Brooklyn food-scene staple serving pizzas, seasonal vegetable dishes, salads, and charcuterie.",
+    "capacity": 84,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 8,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "14:30", "reservedSeats": 8 },
+        { "date": "2026-07-10", "time": "20:00", "reservedSeats": 5 },
+        { "date": "2026-07-12", "time": "21:30", "reservedSeats": 8 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "11:00 am - 12:00 am",
+      "Tuesday": "11:00 am - 12:00 am",
+      "Wednesday": "11:00 am - 12:00 am",
+      "Thursday": "11:00 am - 12:00 am",
+      "Friday": "11:00 am - 12:00 am",
+      "Saturday": "10:00 am - 12:00 am",
+      "Sunday": "10:00 am - 12:00 am"
+    },
+    "comments": [
+      {
+        "id": 501,
+        "restaurantId": 5,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "The pizzas are fantastic, but the vegetable dishes are also excellent. Worth the trip."
+      },
+      {
+        "id": 502,
+        "restaurantId": 5,
+        "userId": 10,
+        "name": "Raymond",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "One of the better pizzas I have had. Trendy, busy, and a bit cramped, but delicious."
+      },
+      {
+        "id": 503,
+        "restaurantId": 5,
+        "userId": 11,
+        "name": "Laurel",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "The pizza is fantastic and the ambiance is great. Not the best ever, but I would definitely go back."
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Hometown BBQ",
+    "neighborhood": "Brooklyn",
+    "photograph": "6.jpg",
+    "address": "454 Van Brunt St, Brooklyn, NY 11231",
+    "latlng": {
+      "lat": 40.674925,
+      "lng": -74.016162
+    },
+    "image": "https://es.nycgo.com/images/venues/6326/hometownbbq_redhook_brooklyn_nyc_kengoodman_hometownbbq-153-3__x_large.jpg",
+    "cuisine_type": "American",
+    "description": "A spacious Texas-style barbecue restaurant known for smoked brisket, ribs, pork tacos, and lamb dishes.",
+    "capacity": 110,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 10,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "13:00", "reservedSeats": 10 },
+        { "date": "2026-07-10", "time": "13:30", "reservedSeats": 8 },
+        { "date": "2026-07-11", "time": "20:00", "reservedSeats": 4 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "Closed",
+      "Tuesday": "12:00 pm - 10:00 pm",
+      "Wednesday": "12:00 pm - 10:00 pm",
+      "Thursday": "12:00 pm - 10:00 pm",
+      "Friday": "12:00 pm - 11:00 pm",
+      "Saturday": "12:00 pm - 11:00 pm",
+      "Sunday": "12:00 pm - 9:00 pm"
+    },
+    "comments": [
+      {
+        "id": 601,
+        "restaurantId": 6,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "Straightforward classics like smoked brisket and baby back ribs are strong choices. Often a line, but worth it."
+      },
+      {
+        "id": 602,
+        "restaurantId": 6,
+        "userId": 12,
+        "name": "Michelle",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "A great try of New York BBQ. Rustic decor, plenty of seats, and food I would come back for."
+      },
+      {
+        "id": 603,
+        "restaurantId": 6,
+        "userId": 13,
+        "name": "Ai-Mei",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "What a gem in Brooklyn. The brisket is soft, the pork tacos are excellent, and the portions are generous."
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Superiority Burger",
+    "neighborhood": "Manhattan",
+    "photograph": "7.jpg",
+    "address": "430 E 9th St, New York, NY 10009",
+    "latlng": {
+      "lat": 40.727397,
+      "lng": -73.983645
+    },
+    "image": "http://www.wazwu.com/blog/wp-content/uploads/2015/10/img_6912.jpg",
+    "cuisine_type": "American",
+    "description": "A tiny vegetarian spot turning seasonal vegetables into satisfying riffs on American comfort food.",
+    "capacity": 24,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 4,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "13:00", "reservedSeats": 4 },
+        { "date": "2026-07-10", "time": "20:30", "reservedSeats": 3 },
+        { "date": "2026-07-12", "time": "21:00", "reservedSeats": 4 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "11:30 am - 10:00 pm",
+      "Tuesday": "Closed",
+      "Wednesday": "11:30 am - 10:00 pm",
+      "Thursday": "11:30 am - 10:00 pm",
+      "Friday": "11:30 am - 10:00 pm",
+      "Saturday": "11:30 am - 10:00 pm",
+      "Sunday": "11:30 am - 10:00 pm"
+    },
+    "comments": [
+      {
+        "id": 701,
+        "restaurantId": 7,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "More than a veggie burger spot. One of the best bang-for-your-buck restaurants in Lower Manhattan."
+      },
+      {
+        "id": 702,
+        "restaurantId": 7,
+        "userId": 14,
+        "name": "Gabriel",
+        "date": "2016-10-26",
+        "rating": 5,
+        "body": "Probably the best vegetarian experience I have ever had. The hype is justified."
+      },
+      {
+        "id": 703,
+        "restaurantId": 7,
+        "userId": 15,
+        "name": "Shivi",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "Great flavours and very satisfying. The sandwich is small but packs a punch."
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "The Dutch",
+    "neighborhood": "Manhattan",
+    "photograph": "8.jpg",
+    "address": "131 Sullivan St, New York, NY 10012",
+    "latlng": {
+      "lat": 40.726584,
+      "lng": -74.002082
+    },
+    "image": "https://es.nycgo.com/images/venues/4829/thedutch29_sa_bar-room_sm__x_large.jpg",
+    "cuisine_type": "American",
+    "description": "A quintessential American restaurant with steaks, burgers, oysters, seafood, and pasta in Soho.",
+    "capacity": 68,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 8,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "20:00", "reservedSeats": 8 },
+        { "date": "2026-07-10", "time": "20:30", "reservedSeats": 8 },
+        { "date": "2026-07-10", "time": "21:00", "reservedSeats": 5 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "11:30 am - 3:00 pm, 5:30 pm - 11:00 pm",
+      "Tuesday": "11:30 am - 3:00 pm, 5:30 pm - 11:00 pm",
+      "Wednesday": "11:30 am - 3:00 pm, 5:30 pm - 11:00 pm",
+      "Thursday": "11:30 am - 3:00 pm, 5:30 pm - 11:00 pm",
+      "Friday": "11:30 am - 3:00 pm, 5:30 pm - 11:30 pm",
+      "Saturday": "10:00 am - 3:00 pm, 5:30 pm - 11:30 pm",
+      "Sunday": "10:00 am - 3:00 pm, 5:30 pm - 11:00 pm"
+    },
+    "comments": [
+      {
+        "id": 801,
+        "restaurantId": 8,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "A great choice for steak, burgers, oysters, seafood, and pasta. It has become part of the Soho landscape."
+      },
+      {
+        "id": 802,
+        "restaurantId": 8,
+        "userId": 16,
+        "name": "Loren",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "I was pleasantly surprised by the food and service. Everything was delicious and well put together."
+      },
+      {
+        "id": 803,
+        "restaurantId": 8,
+        "userId": 17,
+        "name": "Lori",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "The food is well-executed and dinner service flowed smoothly. Make sure to reserve in advance."
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Mu Ramen",
+    "neighborhood": "Queens",
+    "photograph": "9.jpg",
+    "address": "1209 Jackson Ave, Queens, NY 11101",
+    "latlng": {
+      "lat": 40.743797,
+      "lng": -73.950652
+    },
+    "image": "https://resizer.otstatic.com/v2/photos/huge/25670650.jpg",
+    "cuisine_type": "Asian",
+    "description": "A ramen shop known for rich tonkotsu broth, high-minded small plates, and Japanese beef specials.",
+    "capacity": 38,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 6,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "13:30", "reservedSeats": 2 },
+        { "date": "2026-07-10", "time": "21:30", "reservedSeats": 6 },
+        { "date": "2026-07-11", "time": "22:00", "reservedSeats": 6 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "5:00 pm - 10:00 pm",
+      "Tuesday": "5:00 pm - 10:00 pm",
+      "Wednesday": "5:00 pm - 10:00 pm",
+      "Thursday": "5:00 pm - 10:00 pm",
+      "Friday": "5:00 pm - 11:00 pm",
+      "Saturday": "5:00 pm - 11:00 pm",
+      "Sunday": "5:00 pm - 10:00 pm"
+    },
+    "comments": [
+      {
+        "id": 901,
+        "restaurantId": 9,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "One of the best tonkotsu broths around, with interesting plates beyond ramen."
+      },
+      {
+        "id": 902,
+        "restaurantId": 9,
+        "userId": 18,
+        "name": "Brittany",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "I would recommend this place if you enjoy thick curly noodles with intense broth."
+      },
+      {
+        "id": 903,
+        "restaurantId": 9,
+        "userId": 19,
+        "name": "Sally",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "One of the tastiest and most unique ramen places I have been to in NYC. Pricey, but worth a try."
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Casa Enrique",
+    "neighborhood": "Queens",
+    "photograph": "10.jpg",
+    "address": "5-48 49th Ave, Queens, NY 11101",
+    "latlng": {
+      "lat": 40.743394,
+      "lng": -73.954235
+    },
+    "image": "https://i.pinimg.com/474x/47/b1/d3/47b1d3175589f19f58a35cfcd78b3e73--city-restaurants-mexican-restaurants.jpg",
+    "cuisine_type": "Mexican",
+    "description": "A laid-back Mexican restaurant in Long Island City known for tacos, mole, crab tostadas, and desserts.",
+    "capacity": 56,
+    "reservationSettings": {
+      "slotIntervalMinutes": 30,
+      "defaultSlotCapacity": 6,
+      "serviceWindows": [
+        { "name": "lunch", "start": "13:00", "end": "15:00" },
+        { "name": "dinner", "start": "20:00", "end": "23:00" }
+      ],
+      "bookedSlots": [
+        { "date": "2026-07-10", "time": "14:00", "reservedSeats": 6 },
+        { "date": "2026-07-10", "time": "20:00", "reservedSeats": 4 },
+        { "date": "2026-07-13", "time": "22:30", "reservedSeats": 6 }
+      ]
+    },
+    "operating_hours": {
+      "Monday": "5:00 pm - 12:00 am",
+      "Tuesday": "5:00 pm - 12:00 am",
+      "Wednesday": "5:00 pm - 12:00 am",
+      "Thursday": "5:00 pm - 12:00 am",
+      "Friday": "5:00 pm - 12:00 am",
+      "Saturday": "11:00 am - 12:00 am",
+      "Sunday": "11:00 am - 12:00 am"
+    },
+    "comments": [
+      {
+        "id": 1001,
+        "restaurantId": 10,
+        "userId": 1,
+        "name": "Steve",
+        "date": "2016-10-26",
+        "rating": 5,
+        "body": "A cool choice for lunch or drinks after work, with excellent Mexican food and a relaxed feel."
+      },
+      {
+        "id": 1002,
+        "restaurantId": 10,
+        "userId": 20,
+        "name": "Rob",
+        "date": "2016-10-26",
+        "rating": 5,
+        "body": "The hype was real. Please go. Get the ceviche and the tres leches."
+      },
+      {
+        "id": 1003,
+        "restaurantId": 10,
+        "userId": 3,
+        "name": "Jason",
+        "date": "2016-10-26",
+        "rating": 4,
+        "body": "Fairly priced for a Michelin star restaurant. The tres leches cake was the highlight of the night."
+      }
+    ]
+  }
+]

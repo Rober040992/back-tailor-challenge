@@ -39,6 +39,24 @@ For every backend task
 
 Never skip directly from task request to implementation.
 
+## Spec Writing Rules
+
+Specs must be short and focused.
+
+A spec must define only what is specific to the feature.
+
+Do not repeat rules already defined in `constitution.back.md` or `AGENTS.md`.
+
+Do not copy architecture, workflow, language, auth, error format, or general project rules into specs unless the feature needs a specific exception.
+
+Use only one active spec per task.
+
+Read only the target spec and directly related files.
+
+Do not read or reference `CHALLENGE.md`; it is not present in this repository.
+
+If a feature needs a decision, write the decision clearly and keep it short.
+
 ## Planning Rules
 
 Before implementing, always explain
