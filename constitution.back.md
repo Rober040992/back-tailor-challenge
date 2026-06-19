@@ -1,48 +1,38 @@
 # Project Constitution
 
-## Mandatory Rules
+## Mandatory rules
 
-- This file is the main source of truth for the backend repository.
-- All code, comments, commits, documentation and technical files must be written in English.
-- The project must stay simple, pragmatic and maintainable.
-- Do not add features that are not explicitly required or approved.
-- Do not overengineer the architecture.
-- Follow SOLID principles where they improve clarity.
-- Every feature must have an approved spec before implementation.
-- Never jump directly from an idea to code.
-- Backend must be implemented before frontend integration.
-- Codex must not modify unrelated files.
-- Codex must not invent endpoints, fields, models or business rules.
-- If a requirement is unclear, Codex must stop and ask before implementing.
-- Swagger and Docker are optional final improvements, not part of the core MVP.
+This file is the main source of truth for the backend repository.
 
-## Shared Workflow
+All code, comments, commits, documentation and technical files must be written in English.
 
-### Source hierarchy
+The project must stay simple, pragmatic and maintainable.
 
-The backend repository must follow this hierarchy:
+Every feature must have an approved spec before implementation.
+
+Backend must be implemented before frontend integration.
+
+Do not invent endpoints, fields, models or business rules.
+
+Do not modify unrelated files.
+
+If a requirement is unclear, stop and ask.
+
+Swagger and Docker are optional final improvements.
+
+## Source hierarchy
+
+Follow this order:
 
 1. `constitution.back.md`
-2. Feature specs
+2. Feature specs in `docs/specs`
 3. `AGENTS.md`
-4. Codex task prompt
+4. Current Codex prompt
 5. Implementation
 
-If there is a conflict, the higher-level document wins.
+If there is a conflict, the higher-level file wins.
 
-### Feature workflow
-
-Every backend feature must follow this flow:
-
-1. Read the related constitution section.
-2. Read the related feature spec.
-3. Propose a short plan.
-4. Wait for approval.
-5. Implement only the approved scope.
-6. Add or update relevant tests.
-7. Review the result against the spec and constitution.
-
-### Feature priority
+## Feature priority
 
 Backend features must be implemented in this order:
 
@@ -54,21 +44,22 @@ Backend features must be implemented in this order:
 6. Backend tests and documentation
 7. Optional improvements
 
-## Backend Constitution
+## Stack
 
-### Stack
+Use:
 
-- Use NestJS.
-- Use TypeScript.
-- Use PostgreSQL locally.
-- Use Prisma ORM.
-- Use JWT authentication.
-- Use `HttpOnly` cookies for authentication.
-- Use Postman for manual API testing during development.
+* NestJS
+* TypeScript
+* PostgreSQL locally
+* Prisma ORM
+* JWT authentication
+* HttpOnly cookies
+* npm
+* Postman for manual API testing
 
-### Architecture
+## Architecture
 
-Use a layered backend architecture:
+Use layered architecture:
 
 ```txt
 HTTP -> Controller -> Service -> Repository -> Database
@@ -76,104 +67,73 @@ HTTP -> Controller -> Service -> Repository -> Database
 
 Responsibilities:
 
-- Controllers handle HTTP, route params, query params, body input and DTO validation.
-- DTOs validate request input.
-- Services contain business logic.
-- Repositories contain all Prisma queries.
-- PrismaService owns database access.
-- Controllers must not contain business logic.
-- Controllers must not call Prisma directly.
-- Services must not call Prisma directly.
-- Repositories must not contain business rules that belong in services.
+* Controllers handle HTTP and DTO validation.
+* Services contain business logic.
+* Repositories contain Prisma queries.
+* PrismaService owns database access.
 
-Do not use ports, adapters, use cases or hexagonal architecture for this challenge unless explicitly approved.
+Rules:
 
-### Suggested structure
+* Controllers must not contain business logic.
+* Controllers must not call Prisma directly.
+* Services must not call Prisma directly.
+* Repositories must not contain service business logic.
+* Do not use ports, adapters, use cases or hexagonal architecture unless approved.
+
+## Suggested structure
 
 ```txt
 src/
   auth/
-    auth.controller.ts
-    auth.service.ts
-    jwt.strategy.ts
-    dto/
-      login.dto.ts
-
   restaurants/
-    restaurants.controller.ts
-    restaurants.service.ts
-    restaurants.repository.ts
-    dto/
-      create-restaurant.dto.ts
-      update-restaurant.dto.ts
-
   comments/
-    comments.controller.ts
-    comments.service.ts
-    comments.repository.ts
-    dto/
-      create-comment.dto.ts
-      update-comment.dto.ts
-
   favourites/
-    favourites.controller.ts
-    favourites.service.ts
-    favourites.repository.ts
-
   availability/
-    availability.controller.ts
-    availability.service.ts
-
   reservations/
-    reservations.controller.ts
-    reservations.service.ts
-    reservations.repository.ts
-    dto/
-      create-reservation.dto.ts
-
   prisma/
-    prisma.service.ts
-
   common/
     filters/
     errors/
 ```
 
-### Naming rules
+Use plural module names.
 
-- Use plural module names: `restaurants`, `reservations`, `comments`.
-- Use explicit file names:
-  - `restaurants.controller.ts`
-  - `restaurants.service.ts`
-  - `restaurants.repository.ts`
-  - `create-restaurant.dto.ts`
-  - `update-restaurant.dto.ts`
-- Use clear and literal names.
-- Boolean variables must be named with `is`, `has`, `can` or `should` when possible.
-- Avoid vague names such as `data`, `item`, `thing` or `stuff` unless the context is obvious.
+Use explicit file names.
 
-### Database rules
+Use clear and literal names.
 
-- The database schema must be defined through Prisma models.
-- Do not create tables manually.
-- Do not create extra Prisma models or tables for `reservationSettings`, `serviceWindows` or `bookedSlots`.
-- They must remain inside `Restaurant.reservationSettings` as JSON.
-- Database changes must be managed through Prisma migrations.
-- Initial restaurant data must be imported through a Prisma seed.
-- Seed data must be reproducible.
-- User-created reservations must be stored in the `Reservation` model.
-- Do not mutate the original seed data when users create reservations.
+Boolean variables should start with `is`, `has`, `can` or `should` when possible.
 
-## Database Model Decisions
+## Database rules
 
-The backend database must use PostgreSQL with Prisma ORM.
+The database schema must be defined through Prisma models.
 
-Availability must not be represented as a Prisma model.
-Availability is calculated dynamically from `Restaurant.reservationSettings` and confirmed/cancelled reservations.
+Do not create tables manually.
 
-The Prisma schema must use `Int @id @default(autoincrement())` for all primary IDs.
+Use Prisma migrations for database changes.
 
-The Prisma schema must define the following core models:
+Use Prisma seed for initial data.
+
+Seed data must be reproducible.
+
+Do not mutate original restaurant seed data when users create reservations.
+
+Do not create extra Prisma models or tables for:
+
+```txt
+reservationSettings
+serviceWindows
+bookedSlots
+availability
+```
+
+These must remain inside `Restaurant.reservationSettings` as JSON, except availability, which is calculated dynamically.
+
+User-created reservations must be stored in the `Reservation` model.
+
+## Prisma models
+
+The schema must define:
 
 ```txt
 User
@@ -182,9 +142,6 @@ Reservation
 Comment
 Favourite
 ```
-### Database Field Type Decisions
-
-The Prisma schema must follow these field type decisions.
 
 All primary IDs must use:
 
@@ -216,63 +173,63 @@ Favourite.restaurantId: Int
 User fields:
 
 ```txt
-User.username: String
-User.passwordHash: String
-User.createdAt: DateTime
-User.updatedAt: DateTime
+username: String
+passwordHash: String
+createdAt: DateTime
+updatedAt: DateTime
 ```
 
 Restaurant fields:
 
 ```txt
-Restaurant.name: String
-Restaurant.neighborhood: String
-Restaurant.address: String
-Restaurant.lat: Float
-Restaurant.lng: Float
-Restaurant.image: String
-Restaurant.photograph: String
-Restaurant.cuisineType: String
-Restaurant.description: String
-Restaurant.capacity: Int
-Restaurant.operatingHours: Json
-Restaurant.reservationSettings: Json
-Restaurant.createdAt: DateTime
-Restaurant.updatedAt: DateTime
+name: String
+neighborhood: String
+address: String
+lat: Float
+lng: Float
+image: String
+photograph: String
+cuisineType: String
+description: String
+capacity: Int
+operatingHours: Json
+reservationSettings: Json
+createdAt: DateTime
+updatedAt: DateTime
 ```
 
 Reservation fields:
 
 ```txt
-Reservation.date: String
-Reservation.time: String
-Reservation.partySize: Int
-Reservation.status: ReservationStatus
-Reservation.createdAt: DateTime
-Reservation.updatedAt: DateTime
-Reservation.cancelledAt: DateTime?
+date: String
+time: String
+partySize: Int
+status: ReservationStatus
+createdAt: DateTime
+updatedAt: DateTime
+cancelledAt: DateTime?
 ```
 
 Comment fields:
 
 ```txt
-Comment.name: String
-Comment.date: String
-Comment.rating: Int
-Comment.body: String
-Comment.createdAt: DateTime
-Comment.updatedAt: DateTime
+name: String
+date: String
+rating: Int
+body: String
+createdAt: DateTime
+updatedAt: DateTime
 ```
 
 Favourite fields:
 
 ```txt
-Favourite.userId: Int
-Favourite.restaurantId: Int
-Favourite.createdAt: DateTime
+userId: Int
+restaurantId: Int
+createdAt: DateTime
 ```
 
-The Prisma schema must define this enum:
+Reservation enum:
 
 ```prisma
 enum ReservationStatus {
@@ -283,64 +240,64 @@ enum ReservationStatus {
 
 All core models must include `createdAt` and `updatedAt`, except `Favourite`, which only requires `createdAt`.
 
+## Database relationships
 
+Required relationships:
 
-### Database Relationship Decisions
+* `User` has many `Reservation`.
+* `Restaurant` has many `Reservation`.
+* `User` has many `Comment`.
+* `Restaurant` has many `Comment`.
+* `User` and `Restaurant` are connected through `Favourite`.
 
-The Prisma schema must follow these relationships:
+Constraints:
 
-- `User` has many `Reservation`.
-- `Restaurant` has many `Reservation`.
-- `User` has many `Comment`.
-- `Restaurant` has many `Comment`.
-- `User` and `Restaurant` are connected through `Favourite`.
+* `Favourite` must be unique on `userId + restaurantId`.
+* `Reservation` must not be unique on `restaurantId + date + time`.
 
-Important constraints:
+## Authentication
 
-- `Favourite` must have a unique constraint on `userId + restaurantId`.
-- `Reservation` must not have a unique constraint on `restaurantId + date + time`.
-- `Restaurant.reservationSettings` must be stored as JSON.
-- Reservation settings, service windows and initial booked slots must be stored inside `Restaurant.reservationSettings` as JSON.
-- Do not create separate Prisma models or tables for reservation settings, service windows or booked slots unless a future approved spec explicitly changes this.
+JWT must be generated only after successful login.
 
-### Authentication rules
+JWT must be stored in an HttpOnly cookie.
 
-- JWT must be generated only after successful login.
-- JWT must be stored in an `HttpOnly` cookie.
-- JWT expiration must be 24 hours.
-- JWT tokens must not be stored in the database.
-- Protected endpoints must read the authenticated user from the JWT.
-- Logout must clear the authentication cookie.
-- User registration is out of scope unless explicitly approved.
-- The project will use 4 predefined seed users for testing authenticated flows.
-- Sample credentials must be documented in the README.
+JWT expires after 24 hours.
 
-### Authorization and ownership rules
+JWT tokens must not be stored in the database.
+
+Protected endpoints must read the authenticated user from the JWT.
+
+Logout clears the authentication cookie.
+
+Registration is out of scope.
+
+The project uses 4 predefined seed users.
+
+Sample credentials must be documented in the README.
+
+## Authorization
 
 Ownership means that an authenticated user can only operate on resources that belong to that user.
 
 Rules:
 
-- `GET /me/favourites` returns only the authenticated user’s favourites.
-- `POST /me/favourites/:restaurantId` creates a favourite only for the authenticated user.
-- `DELETE /me/favourites/:restaurantId` removes a favourite only from the authenticated user.
-- `POST /restaurants/:restaurantId/comments` creates a comment using the authenticated user as author.
-- `PATCH /comments/:commentId` is allowed only for the comment author.
-- `DELETE /comments/:commentId` is allowed only for the comment author.
-- `POST /reservations` creates a reservation only for the authenticated user.
-- `GET /me/reservations` returns only the authenticated user’s reservations.
-- `GET /reservations/:reservationId` is allowed only for the reservation owner.
-- `PATCH /reservations/:reservationId/cancel` is allowed only for the reservation owner.
+* Users manage only their own favourites.
+* Users list only their own reservations.
+* Users read only their own reservation details.
+* Users cancel only their own reservations.
+* Comments are created using the authenticated user as author.
+* Only comment authors can edit comments.
+* Only comment authors can delete comments.
 
 HTTP meaning:
 
-- `401 Unauthorized` means the user is not authenticated.
-- `403 Forbidden` means the user is authenticated but does not own the resource.
-- `404 Not Found` means the resource does not exist.
+* `401 Unauthorized`: user is not authenticated.
+* `403 Forbidden`: user is authenticated but does not own the resource.
+* `404 Not Found`: resource does not exist.
 
-### API endpoints
+## API endpoints
 
-Use these backend endpoints unless a future spec explicitly changes them:
+Use these endpoints unless a future spec changes them.
 
 ```txt
 auth:
@@ -375,8 +332,6 @@ GET    /reservations/:reservationId
 PATCH  /reservations/:reservationId/cancel
 ```
 
-### Public and private routes
-
 Public routes:
 
 ```txt
@@ -406,12 +361,13 @@ GET    /reservations/:reservationId
 PATCH  /reservations/:reservationId/cancel
 ```
 
-Restaurant create, update and delete endpoints only require a valid authenticated user.
+Restaurant create, update and delete only require a valid authenticated user.
+
 No admin role is required for this MVP.
 
-### Error format
+## Error format
 
-All API errors must follow this format:
+All API errors must follow this shape:
 
 ```json
 {
@@ -431,145 +387,152 @@ All API errors must follow this format:
 
 Rules:
 
-- `statusCode` must match the HTTP status code.
-- `error` must be a stable machine-readable code.
-- `message` must be readable for humans.
-- `path` must contain the request path.
-- `timestamp` must be an ISO string.
-- `details` is optional and should be used for field validation errors.
-- Do not return different error shapes between modules.
+* `statusCode` must match the HTTP status.
+* `error` must be a stable machine-readable code.
+* `message` must be readable.
+* `path` must contain the request path.
+* `timestamp` must be an ISO string.
+* `details` is optional.
+* Do not return different error shapes between modules.
 
-### Status codes
+Status codes:
 
-Use these status codes consistently:
+```txt
+200 OK
+201 Created
+204 No Content
+400 Bad Request
+401 Unauthorized
+403 Forbidden
+404 Not Found
+409 Conflict
+500 Internal Server Error
+```
 
-- `200 OK` for successful reads and updates with response body.
-- `201 Created` for successful resource creation.
-- `204 No Content` for successful delete operations without response body.
-- `400 Bad Request` for invalid input or invalid query params.
-- `401 Unauthorized` for missing or invalid JWT.
-- `403 Forbidden` for authenticated users without permission.
-- `404 Not Found` for missing resources.
-- `409 Conflict` for capacity conflicts, duplicate favourites or invalid state conflicts.
-- `500 Internal Server Error` for unexpected errors.
+Use `409 Conflict` for overbooking, duplicate favourites and invalid state conflicts.
 
-## Business Rules
+## Business rules
 
 ### Restaurants
 
-- Restaurants must support CRUD operations.
-- Restaurant list and detail responses must include enough data for frontend list and detail views.
-- Restaurant responses must include name, description, address, image, capacity and cuisine type.
-- Restaurant reservation settings must include service windows, slot interval and default slot capacity.
-- Restaurant rating must not be stored manually as a mutable restaurant field.
-- Restaurant rating must be calculated from comment ratings as `averageRating`.
-- Restaurant responses must include `averageRating` and `commentsCount`.
-- If a restaurant has no comments, `averageRating` must be `null`.
+Restaurants must support CRUD.
+
+Restaurant responses must include enough data for list and detail views.
+
+Restaurant responses must include:
+
+```txt
+name
+description
+address
+image
+capacity
+cuisineType
+reservationSettings
+averageRating
+commentsCount
+```
+
+Restaurant rating must be calculated from comments.
+
+Do not store restaurant rating as a mutable restaurant field.
+
+If a restaurant has no comments, `averageRating` must be `null`.
 
 ### Comments
 
-- Comments belong to a restaurant.
-- Comments belong to a user.
-- Comments must support create, read, update and delete.
-- Only the comment author can edit a comment.
-- Only the comment author can delete a comment.
+Comments belong to a restaurant and a user.
+
+Comments support create, read, update and delete.
+
+Only the comment author can edit or delete a comment.
 
 ### Favourites
 
-- Favourites belong to a user.
-- A user can add a restaurant to favourites.
-- A user can remove a restaurant from favourites.
-- A user can retrieve only their own favourites.
-- Duplicated favourites should return `409 Conflict`.
+Favourites belong to a user.
+
+Users can add, remove and list only their own favourites.
+
+Duplicated favourites must return `409 Conflict`.
 
 ### Availability
 
-- Availability must be generated on demand.
-- Do not pre-create future dates.
-- Availability must be scoped by restaurant, date and time.
-- Availability must be generated from restaurant reservation settings.
-- Service window start time is inclusive.
-- Service window end time is exclusive.
-- Default slots are generated from lunch and dinner service windows.
-- Slot interval is defined by the restaurant settings.
-- Each slot has a capacity.
-- Existing bookedSlots inside Restaurant.reservationSettings reduce available seats. They are not a separate Prisma model or database table.
-- Confirmed user reservations reduce available seats.
-- Cancelled reservations release seats.
-- Missing `date` must return `400 Bad Request`.
-- Missing `partySize` must return `400 Bad Request`.
-- A slot is selectable only when `availableSeats >= partySize`.
+Availability is generated on demand.
+
+Do not pre-create future dates.
+
+Availability is scoped by restaurant, date and time.
+
+Availability is generated from restaurant reservation settings.
+
+Service window start time is inclusive.
+
+Service window end time is exclusive.
+
+Slot interval comes from restaurant settings.
+
+Existing `bookedSlots` reduce available seats.
+
+Confirmed reservations reduce available seats.
+
+Cancelled reservations release seats.
+
+Missing `date` returns `400 Bad Request`.
+
+Missing `partySize` returns `400 Bad Request`.
+
+A slot is selectable only when `availableSeats >= partySize`.
 
 ### Reservations
 
-- Reservations belong to a restaurant.
-- Reservations belong to a user.
-- Reservation `date` must be stored as `YYYY-MM-DD`.
-- Reservation `time` must be stored as `HH:MM`.
-- Reservation status must be either `confirmed` or `cancelled`.
-- A reservation cannot be created in the past.
-- Party size must be greater than zero.
-- Reservation time must match one of the generated restaurant slots.
-- Party size cannot exceed available seats.
-- Creating a reservation consumes capacity for the selected restaurant, date and time.
-- Cancelling a reservation releases its seats.
-- A cancelled reservation cannot be cancelled again.
-- When a reservation is cancelled, `status` must be changed to `cancelled` and `cancelledAt` must be set.
-- Availability must be recalculated server-side before accepting a reservation.
-- The frontend availability response must never be trusted as the source of truth.
-- Capacity conflicts must return `409 Conflict`.
+Reservations belong to a restaurant and a user.
 
-## AI Workflow
+Reservation `date` is stored as `YYYY-MM-DD`.
 
-- Codex is the implementation assistant inside VS Code.
-- Codex must implement only from approved specs.
-- Codex must not invent features.
-- Codex must not modify unrelated files.
-- Codex must not rewrite files without explicit approval.
-- Codex must propose a short plan before implementation.
-- Codex must list affected layers before implementation.
-- Codex must review the result against the related spec.
-- `AGENTS.md` must exist in the repository root.
-- `.codex/` may be used only for optional prompts or notes.
-- AI usage must be documented in the README.
-- The README must explain what AI helped with, what was reviewed, and what was rejected or changed.
+Reservation `time` is stored as `HH:MM`.
 
-## Decisions
+Reservation status is `confirmed` or `cancelled`.
 
-- The backend repository is separate from the frontend repository.
-- The backend is implemented first.
-- NestJS and TypeScript are the backend stack.
-- PostgreSQL is the local database.
-- Prisma ORM is used for schema, migrations and seed.
-- The project uses JWT authentication.
-- JWT is stored in an `HttpOnly` cookie.
-- JWT expires after 24 hours.
-- JWT tokens are not stored in the database.
-- Registration is not part of the MVP.
-- The app uses 4 predefined seed users.
-- Restaurant rating is calculated from comments.
-- New reservations are stored in the `Reservation` model.
-- Initial booked slots remain inside `Restaurant.reservationSettings.bookedSlots`.
-- Availability is generated on demand.
-- Availability is recalculated server-side before reservation creation.
-- API errors use one shared format.
-- `409 Conflict` is used for overbooking, duplicated favourites and invalid state conflicts.
-- Swagger is optional and can be added at the end.
-- Docker is optional and can be added at the end.
+A reservation cannot be created in the past.
 
-## Out of Scope
+Party size must be greater than zero.
 
-- User registration.
-- Payments.
-- Admin roles.
-- Multi-tenant support.
-- WebSockets.
-- Real-time updates.
-- Complex RBAC.
-- External authentication providers.
-- Email notifications.
-- SMS notifications.
-- Search engine optimization.
-- Production deployment unless there is time.
-- Swagger before the core backend is complete.
-- Docker before the core local flow works.
+Reservation time must match a generated slot.
+
+Party size cannot exceed available seats.
+
+Creating a reservation consumes capacity.
+
+Cancelling a reservation releases capacity.
+
+A cancelled reservation cannot be cancelled again.
+
+Cancelling a reservation sets:
+
+```txt
+status = cancelled
+cancelledAt = current DateTime
+```
+
+Availability must be recalculated server-side before accepting a reservation.
+
+The frontend availability response is never trusted.
+
+Capacity conflicts return `409 Conflict`.
+
+## Out of scope
+
+* User registration
+* Payments
+* Admin roles
+* Multi-tenant support
+* WebSockets
+* Real-time updates
+* Complex RBAC
+* External authentication providers
+* Email notifications
+* SMS notifications
+* SEO
+* Production deployment unless there is time
+* Swagger before the core backend is complete
+* Docker before the core local flow works
