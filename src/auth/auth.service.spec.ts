@@ -1,15 +1,16 @@
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { JwtService } from "@nestjs/jwt";
 import { hash } from "bcrypt";
-import { AuthRepository } from "./auth.repository";
+import { AuthRepository, type AuthUser } from "./auth.repository";
 import { AuthService } from "./auth.service";
 
 describe("AuthService", () => {
   let authService: AuthService;
   let authRepository: {
-    findByUsername: jest.Mock;
+    findByUsername: jest.MockedFunction<(username: string) => Promise<AuthUser | null>>;
   };
   let jwtService: {
-    signAsync: jest.Mock;
+    signAsync: jest.MockedFunction<(payload: { sub: number; username: string }) => Promise<string>>;
   };
 
   beforeEach(() => {
