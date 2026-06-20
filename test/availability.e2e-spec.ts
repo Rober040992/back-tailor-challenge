@@ -4,7 +4,6 @@ import request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "../src/app.module";
 import { configureApplication } from "../src/app.setup";
-import { describe, it } from "node:test";
 
 interface AvailabilityBody {
   restaurantId: number;
@@ -84,11 +83,3 @@ describe("Availability (e2e)", () => {
     await app.close();
   });
 });
-function beforeAll(arg0: () => Promise<void>) {
-  throw new Error("Function not implemented.");
-}
-
-function expect(body: AvailabilityBody) {
-  throw new Error("Function not implemented.");
-}
-

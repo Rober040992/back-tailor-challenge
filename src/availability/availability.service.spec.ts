@@ -30,12 +30,14 @@ function createRestaurantRecord(
 describe("AvailabilityService", () => {
   let availabilityService: AvailabilityService;
   let availabilityRepository: {
-    findRestaurant: jest.MockedFunction<AvailabilityRepository["findRestaurant"]>;
+    findRestaurantAvailabilityData: jest.MockedFunction<
+      AvailabilityRepository["findRestaurantAvailabilityData"]
+    >;
   };
 
   beforeEach(() => {
     availabilityRepository = {
-      findRestaurant: jest.fn(),
+      findRestaurantAvailabilityData: jest.fn(),
     };
     availabilityService = new AvailabilityService(
       availabilityRepository as unknown as AvailabilityRepository,
@@ -43,7 +45,7 @@ describe("AvailabilityService", () => {
   });
 
   it("generates lunch and dinner slots and excludes service window end times", async () => {
-    availabilityRepository.findRestaurant.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
 
     const result = await availabilityService.findAvailability(1, "2026-07-12", 4);
 
@@ -57,7 +59,7 @@ describe("AvailabilityService", () => {
   });
 
   it("returns full-capacity slots for a date without bookings", async () => {
-    availabilityRepository.findRestaurant.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
 
     const result = await availabilityService.findAvailability(1, "2026-07-12", 8);
 
@@ -74,7 +76,7 @@ describe("AvailabilityService", () => {
   });
 
   it("combines seeded booked seats and confirmed reservation seats", async () => {
-    availabilityRepository.findRestaurant.mockResolvedValue(
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
       createRestaurantRecord({
         reservations: [
           { time: "13:00", partySize: 2 },
@@ -95,7 +97,7 @@ describe("AvailabilityService", () => {
   });
 
   it("never returns available seats below zero", async () => {
-    availabilityRepository.findRestaurant.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
 
     const result = await availabilityService.findAvailability(1, "2026-07-10", 1);
 
@@ -109,7 +111,7 @@ describe("AvailabilityService", () => {
   });
 
   it("marks a slot available only when it can fit the party size", async () => {
-    availabilityRepository.findRestaurant.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
 
     const fittingParty = await availabilityService.findAvailability(1, "2026-07-10", 5);
     const largerParty = await availabilityService.findAvailability(1, "2026-07-10", 6);
@@ -119,7 +121,7 @@ describe("AvailabilityService", () => {
   });
 
   it("returns not found when the restaurant does not exist", async () => {
-    availabilityRepository.findRestaurant.mockResolvedValue(null);
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(null);
 
     await expect(availabilityService.findAvailability(999, "2026-07-10", 4)).rejects.toBeInstanceOf(
       NotFoundException,
