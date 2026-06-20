@@ -5,7 +5,6 @@ import { AuthRepository, PublicUser } from "./auth.repository";
 import { LoginDto } from "./dto/login.dto";
 
 const INVALID_CREDENTIALS_MESSAGE = "Invalid username or password.";
-const DUMMY_PASSWORD_HASH = "$2b$10$M7fFZQodtXi0vRNs3JfRkuX58d3q6ylw1jFYhsfl2vSiQ9ihVZ4uK";
 
 export interface LoginResult {
   accessToken: string;
@@ -21,9 +20,14 @@ export class AuthService {
 
   async login(loginDto: LoginDto): Promise<LoginResult> {
     const user = await this.authRepository.findByUsername(loginDto.username);
-    const isPasswordValid = await compare(loginDto.password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
 
-    if (!user || !isPasswordValid) {
+    if (!user) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
+
+    const isPasswordValid = await compare(loginDto.password, user.passwordHash);
+
+    if (!isPasswordValid) {
       throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 

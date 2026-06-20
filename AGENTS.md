@@ -81,6 +81,21 @@ Do not rename files unless the spec requires it.
 
 Do not change public API contracts unless the spec requires it.
 
+## Strict Scope Rule
+
+Implement the approved spec as the source of truth.
+
+Do not add unrelated features, large abstractions, speculative behavior, or changes outside the requested scope.
+
+Small implementation improvements are allowed only when they directly support the approved requirement, do not change the expected behavior, and do not expand the feature scope.
+
+If a potential improvement is useful but not necessary to satisfy the spec, do not implement it immediately. Mention it separately as an optional proposal and wait for explicit approval.
+
+Do not infer additional requirements from broad statements.
+
+For example, “invalid credentials must not reveal which field failed” means the public error response must be the same, unless the spec explicitly requires additional protections such as timing-attack mitigation.
+
+
 ## Commands
 
 Use npm.
