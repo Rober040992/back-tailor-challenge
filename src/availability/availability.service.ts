@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { AvailabilityRepository } from "./availability.repository";
+import { AvailabilityResponse } from "./availability.types";
 
 const RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found.";
 
@@ -19,20 +20,6 @@ interface ReservationSettings {
   defaultSlotCapacity: number;
   serviceWindows: ServiceWindow[];
   bookedSlots: BookedSlot[];
-}
-
-export interface AvailabilitySlotResponse {
-  time: string;
-  capacity: number;
-  reservedSeats: number;
-  availableSeats: number;
-  available: boolean;
-}
-
-export interface AvailabilityResponse {
-  restaurantId: number;
-  date: string;
-  slots: AvailabilitySlotResponse[];
 }
 
 @Injectable()
@@ -99,3 +86,4 @@ export class AvailabilityService {
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   }
 }
+

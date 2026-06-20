@@ -67,6 +67,7 @@ partySize: number
 - `restaurantId` must reference an existing restaurant.
 - `date` is required.
 - `date` must use `YYYY-MM-DD`.
+- `date` must not be earlier than today's date.
 - `partySize` is required.
 - `partySize` must be greater than `0`.
 
@@ -77,6 +78,7 @@ partySize: number
 - If existing reserved seats exceed slot capacity, return `availableSeats: 0`.
 - If the restaurant does not exist, return `404`.
 - If `date` or `partySize` is missing or invalid, return `400`.
+- If `date` is earlier than today's date, return `400`.
 
 **Tests:**
 

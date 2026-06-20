@@ -1,5 +1,6 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from "@nestjs/common";
-import { AvailabilityResponse, AvailabilityService } from "./availability.service";
+import { AvailabilityService } from "./availability.service";
+import type { AvailabilityResponse } from "./availability.types";
 import { AvailabilityQueryDto } from "./dto/availability-query.dto";
 
 @Controller("restaurants")
