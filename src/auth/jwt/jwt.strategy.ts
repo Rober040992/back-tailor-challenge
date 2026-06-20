@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { Request } from "express";
 import { ExtractJwt, Strategy } from "passport-jwt";
-import { AuthRepository, PublicUser } from "./auth.repository";
+import { AuthRepository, PublicUser } from "../auth.repository";
 
 interface JwtPayload {
   sub: number;

@@ -2,7 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards } from "@n
 import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
-import { JwtAuthGuard } from "./jwt-auth.guard";
+import { JwtAuthGuard } from "./jwt/jwt-auth.guard";
 
 const ACCESS_TOKEN_COOKIE = "access_token";
 const ACCESS_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
