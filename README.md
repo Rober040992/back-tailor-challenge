@@ -6,7 +6,8 @@ This repository contains the backend REST API for a restaurant reservation appli
 
 The current implementation includes authentication, restaurant CRUD, on-demand availability, reservations, favourites, comments, centralized logging, shared API error handling, Prisma models, and reproducible local seed data.
 
-For all implemented routes, request bodies, responses, validation rules, and Postman instructions, see the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md).
+> [!NOTE]
+> For all implemented routes, request bodies, responses, validation rules, and Postman instructions, see the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md).
 
 ## Current feature status
 
@@ -107,7 +108,8 @@ JWT_SECRET="replace-with-a-safe-local-secret"
 PORT=3000
 ```
 
-`DATABASE_URL` and `JWT_SECRET` are required. `PORT` is optional and defaults to `3000`.
+> [!IMPORTANT]
+> `DATABASE_URL` and `JWT_SECRET` are required. `PORT` is optional and defaults to `3000`.
 
 Do not commit `.env` or real credentials.
 
@@ -141,7 +143,8 @@ Do not commit `.env` or real credentials.
    npm run seed
    ```
 
-The seed clears the local records covered by the seed and recreates four users, ten restaurants, and their supplied comments. It is intended for local development.
+> [!WARNING]
+> The seed deletes the existing local favourites, comments, reservations, restaurants, and users before recreating the sample dataset. Do not run it against a database containing data you need to keep.
 
 ## Running the app locally
 
@@ -150,6 +153,9 @@ Start the API in watch mode:
 ```bash
 npm run start:dev
 ```
+
+> [!TIP]
+> Use `npm run start:dev` during development so NestJS automatically restarts when source files change.
 
 By default, the API is available at:
 
@@ -180,13 +186,15 @@ npm run build
 
 The e2e tests use the configured PostgreSQL database and expect the seed users and restaurant data to be available.
 
-Note that `npm run lint` uses ESLint's automatic fix mode and may modify files.
+> [!CAUTION]
+> `npm run lint` uses ESLint's automatic fix mode and may modify source or test files.
 
 ## Authentication and sample credentials
 
 Authentication uses a JWT stored in the `access_token` HttpOnly cookie. Tokens expire after 24 hours, are not stored in the database, and are cleared on logout. Registration is out of scope.
 
-The local cookie uses `SameSite=Lax` and `Secure=false`, which is intended for local HTTP development.
+> [!CAUTION]
+> The local cookie uses `SameSite=Lax` and `Secure=false`. This configuration is intended for local HTTP development and must not be used unchanged in production.
 
 The seed creates four users with password `12345`:
 
@@ -305,3 +313,9 @@ Generated output was checked against `constitution.back.md`, the active specific
 26. Delete it with authenticated `DELETE /restaurants/:id`.
 27. Call `POST /auth/logout`.
 28. Run `npm run test`, `npm run test:e2e`, and `npm run build`.
+
+---
+
+## Author note
+
+Built by Roberto Gomez Fabrega as part of a technical challenge, with a focus on clean backend architecture, clear business rules, and maintainable API design.
