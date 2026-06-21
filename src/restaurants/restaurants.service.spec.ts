@@ -48,7 +48,9 @@ describe("RestaurantsService", () => {
       hasRelations: jest.fn(),
       delete: jest.fn(),
     };
-    restaurantsService = new RestaurantsService(restaurantsRepository as unknown as RestaurantsRepository);
+    restaurantsService = new RestaurantsService(
+      restaurantsRepository as unknown as RestaurantsRepository,
+    );
   });
 
   it("calculates the average rating and comments count", async () => {

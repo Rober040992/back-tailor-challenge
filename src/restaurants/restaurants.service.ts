@@ -83,7 +83,10 @@ export class RestaurantsService {
 
   private toResponse(restaurant: RestaurantRecord): RestaurantResponse {
     const commentsCount = restaurant._count.comments;
-    const averageRating = commentsCount === 0 ? null : restaurant.comments.reduce((total, comment) => total + comment.rating, 0) / commentsCount;
+    const averageRating =
+      commentsCount === 0
+        ? null
+        : restaurant.comments.reduce((total, comment) => total + comment.rating, 0) / commentsCount;
 
     return {
       id: restaurant.id,

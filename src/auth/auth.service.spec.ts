@@ -20,7 +20,10 @@ describe("AuthService", () => {
     jwtService = {
       signAsync: jest.fn(),
     };
-    authService = new AuthService(authRepository as unknown as AuthRepository, jwtService as unknown as JwtService);
+    authService = new AuthService(
+      authRepository as unknown as AuthRepository,
+      jwtService as unknown as JwtService,
+    );
   });
 
   it("returns a public user and signs the expected JWT payload", async () => {

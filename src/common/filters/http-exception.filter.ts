@@ -1,4 +1,11 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from "@nestjs/common";
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from "@nestjs/common";
 import { Request, Response } from "express";
 
 interface ExceptionResponse {
@@ -14,12 +21,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const httpContext = host.switchToHttp();
     const request = httpContext.getRequest<Request>();
     const response = httpContext.getResponse<Response>();
-    const statusCode = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-    const exceptionResponse = exception instanceof HttpException ? exception.getResponse() : undefined;
+    const statusCode =
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    const exceptionResponse =
+      exception instanceof HttpException ? exception.getResponse() : undefined;
     const normalizedResponse = this.normalizeResponse(exceptionResponse);
 
     if (!(exception instanceof HttpException)) {
-      this.logger.error("Unexpected request error.", exception instanceof Error ? exception.stack : undefined);
+      this.logger.error(
+        "Unexpected request error.",
+        exception instanceof Error ? exception.stack : undefined,
+      );
     }
 
     response.status(statusCode).json({
@@ -41,7 +53,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     if (this.isExceptionResponse(response)) {
-      const message = Array.isArray(response.message) ? response.message.join(", ") : response.message;
+      const message = Array.isArray(response.message)
+        ? response.message.join(", ")
+        : response.message;
 
       return {
         message: message ?? "Request failed.",

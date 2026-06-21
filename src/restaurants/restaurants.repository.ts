@@ -67,7 +67,11 @@ export class RestaurantsRepository {
       return false;
     }
 
-    return restaurant._count.comments > 0 || restaurant._count.favourites > 0 || restaurant._count.reservations > 0;
+    return (
+      restaurant._count.comments > 0 ||
+      restaurant._count.favourites > 0 ||
+      restaurant._count.reservations > 0
+    );
   }
 
   async delete(id: number): Promise<boolean> {

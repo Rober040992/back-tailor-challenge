@@ -2,9 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 import { BadRequestException, ConflictException } from "@nestjs/common";
 import { Reservation } from "@prisma/client";
 import { AvailabilityCalculator } from "../availability/availability.calculator";
-import {
-  AvailabilityRestaurantRecord,
-} from "../availability/availability.repository";
+import { AvailabilityRestaurantRecord } from "../availability/availability.repository";
 import { ReservationsRepository, ReservationTransaction } from "./reservations.repository";
 import { ReservationsService } from "./reservations.service";
 

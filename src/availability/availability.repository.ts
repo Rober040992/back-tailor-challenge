@@ -15,7 +15,10 @@ export interface AvailabilityRestaurantRecord {
 export class AvailabilityRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findRestaurantAvailabilityData(id: number, date: string): Promise<AvailabilityRestaurantRecord | null> {
+  findRestaurantAvailabilityData(
+    id: number,
+    date: string,
+  ): Promise<AvailabilityRestaurantRecord | null> {
     return this.prisma.restaurant.findUnique({
       where: { id },
       select: {

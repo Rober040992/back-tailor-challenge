@@ -16,8 +16,10 @@ const IsTodayOrLater = () =>
     validator: {
       validate: (value: unknown) => {
         const today = new Date();
-        const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1)
-          .padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+          2,
+          "0",
+        )}-${String(today.getDate()).padStart(2, "0")}`;
 
         return typeof value === "string" && value >= todayDate;
       },

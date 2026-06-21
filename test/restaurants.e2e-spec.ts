@@ -82,18 +82,33 @@ describe("Restaurants CRUD (e2e)", () => {
 
   it("requires authentication for restaurant mutations", async () => {
     await request(app.getHttpServer()).post("/restaurants").send(restaurantPayload).expect(401);
-    await request(app.getHttpServer()).patch("/restaurants/1").send({ name: "Updated" }).expect(401);
+    await request(app.getHttpServer())
+      .patch("/restaurants/1")
+      .send({ name: "Updated" })
+      .expect(401);
     await request(app.getHttpServer()).delete("/restaurants/1").expect(401);
   });
 
   it("validates create and update payloads", async () => {
-    await request(app.getHttpServer()).post("/restaurants").set("Cookie", authenticationCookies).send({}).expect(400);
+    await request(app.getHttpServer())
+      .post("/restaurants")
+      .set("Cookie", authenticationCookies)
+      .send({})
+      .expect(400);
 
-    await request(app.getHttpServer()).patch("/restaurants/1").set("Cookie", authenticationCookies).send({ unsupportedField: true }).expect(400);
+    await request(app.getHttpServer())
+      .patch("/restaurants/1")
+      .set("Cookie", authenticationCookies)
+      .send({ unsupportedField: true })
+      .expect(400);
   });
 
   it("creates, reads, updates, and deletes a restaurant", async () => {
-    const createResponse = await request(app.getHttpServer()).post("/restaurants").set("Cookie", authenticationCookies).send(restaurantPayload).expect(201);
+    const createResponse = await request(app.getHttpServer())
+      .post("/restaurants")
+      .set("Cookie", authenticationCookies)
+      .send(restaurantPayload)
+      .expect(201);
     const createdRestaurant = createResponse.body as Record<string, unknown>;
     const restaurantId = createdRestaurant.id as number;
 
@@ -104,7 +119,9 @@ describe("Restaurants CRUD (e2e)", () => {
       commentsCount: 0,
     });
 
-    const getResponse = await request(app.getHttpServer()).get(`/restaurants/${restaurantId}`).expect(200);
+    const getResponse = await request(app.getHttpServer())
+      .get(`/restaurants/${restaurantId}`)
+      .expect(200);
     expect(getResponse.body).toMatchObject({
       id: restaurantId,
       name: restaurantPayload.name,
@@ -120,15 +137,25 @@ describe("Restaurants CRUD (e2e)", () => {
       name: "Updated CRUD Test Restaurant",
     });
 
-    await request(app.getHttpServer()).delete(`/restaurants/${restaurantId}`).set("Cookie", authenticationCookies).expect(204);
+    await request(app.getHttpServer())
+      .delete(`/restaurants/${restaurantId}`)
+      .set("Cookie", authenticationCookies)
+      .expect(204);
     await request(app.getHttpServer()).get(`/restaurants/${restaurantId}`).expect(404);
   });
 
   it("returns not found for missing restaurant mutations", async () => {
     const missingId = 2147483647;
 
-    await request(app.getHttpServer()).patch(`/restaurants/${missingId}`).set("Cookie", authenticationCookies).send({ name: "Missing" }).expect(404);
-    await request(app.getHttpServer()).delete(`/restaurants/${missingId}`).set("Cookie", authenticationCookies).expect(404);
+    await request(app.getHttpServer())
+      .patch(`/restaurants/${missingId}`)
+      .set("Cookie", authenticationCookies)
+      .send({ name: "Missing" })
+      .expect(404);
+    await request(app.getHttpServer())
+      .delete(`/restaurants/${missingId}`)
+      .set("Cookie", authenticationCookies)
+      .expect(404);
   });
 
   afterAll(async () => {

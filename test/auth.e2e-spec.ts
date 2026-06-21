@@ -61,7 +61,12 @@ describe("Authentication (e2e)", () => {
       message: "Validation failed.",
       path: "/auth/login",
     });
-    expect(responseBody.details).toEqual(expect.arrayContaining([expect.objectContaining({ field: "username" }), expect.objectContaining({ field: "password" })]));
+    expect(responseBody.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ field: "username" }),
+        expect.objectContaining({ field: "password" }),
+      ]),
+    );
   });
 
   it("does not reveal which credential is invalid", async () => {
@@ -100,7 +105,10 @@ describe("Authentication (e2e)", () => {
       .expect(200);
     const cookies = loginResponse.headers["set-cookie"] as unknown as string[];
 
-    const logoutResponse = await request(app.getHttpServer()).post("/auth/logout").set("Cookie", cookies).expect(204);
+    const logoutResponse = await request(app.getHttpServer())
+      .post("/auth/logout")
+      .set("Cookie", cookies)
+      .expect(204);
     const clearedCookies = logoutResponse.headers["set-cookie"] as unknown as string[];
 
     expect(clearedCookies[0]).toContain("access_token=");

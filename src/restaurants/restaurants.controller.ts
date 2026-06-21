@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Patch, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt/jwt-auth.guard";
 import { CreateRestaurantDto } from "./dto/create-restaurant.dto";
 import { UpdateRestaurantDto } from "./dto/update-restaurant.dto";
@@ -26,7 +38,10 @@ export class RestaurantsController {
 
   @Patch(":id")
   @UseGuards(JwtAuthGuard)
-  update(@Param("id", ParseIntPipe) id: number, @Body() updateRestaurantDto: UpdateRestaurantDto): Promise<RestaurantResponse> {
+  update(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() updateRestaurantDto: UpdateRestaurantDto,
+  ): Promise<RestaurantResponse> {
     return this.restaurantsService.update(id, updateRestaurantDto);
   }
 

@@ -47,7 +47,9 @@ describe("AvailabilityService", () => {
   });
 
   it("generates lunch and dinner slots and excludes service window end times", async () => {
-    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
+      createRestaurantRecord(),
+    );
 
     const result = await availabilityService.findAvailability(1, "2026-07-12", 4);
 
@@ -61,7 +63,9 @@ describe("AvailabilityService", () => {
   });
 
   it("returns full-capacity slots for a date without bookings", async () => {
-    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
+      createRestaurantRecord(),
+    );
 
     const result = await availabilityService.findAvailability(1, "2026-07-12", 8);
 
@@ -99,7 +103,9 @@ describe("AvailabilityService", () => {
   });
 
   it("never returns available seats below zero", async () => {
-    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
+      createRestaurantRecord(),
+    );
 
     const result = await availabilityService.findAvailability(1, "2026-07-10", 1);
 
@@ -113,7 +119,9 @@ describe("AvailabilityService", () => {
   });
 
   it("marks a slot available only when it can fit the party size", async () => {
-    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
+    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
+      createRestaurantRecord(),
+    );
 
     const fittingParty = await availabilityService.findAvailability(1, "2026-07-10", 5);
     const largerParty = await availabilityService.findAvailability(1, "2026-07-10", 6);

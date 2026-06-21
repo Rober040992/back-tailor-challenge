@@ -6,9 +6,14 @@ interface ValidationErrorDetail {
   message: string;
 }
 
-function flattenValidationErrors(errors: ValidationError[], parentPath = ""): ValidationErrorDetail[] {
+function flattenValidationErrors(
+  errors: ValidationError[],
+  parentPath = "",
+): ValidationErrorDetail[] {
   return errors.flatMap(validationError => {
-    const field = parentPath ? `${parentPath}.${validationError.property}` : validationError.property;
+    const field = parentPath
+      ? `${parentPath}.${validationError.property}`
+      : validationError.property;
     const details = Object.values(validationError.constraints ?? {}).map(message => ({
       field,
       message,
