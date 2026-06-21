@@ -1,60 +1,12 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
-import type { Prisma } from "@prisma/client";
 import { logSafely } from "../common/logging/safe-logger";
 import { CreateRestaurantDto } from "./dto/create-restaurant.dto";
 import { UpdateRestaurantDto } from "./dto/update-restaurant.dto";
-import { RestaurantRecord, RestaurantsRepository } from "./restaurants.repository";
+import { RestaurantRecord, RestaurantResponse, toRestaurantResponse } from "./restaurant-response";
+import { RestaurantsRepository } from "./restaurants.repository";
 
 const RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found.";
 const RESTAURANT_HAS_RELATIONS_MESSAGE = "Restaurant with related records cannot be deleted.";
-
-export interface RestaurantResponse {
-  id: number;
-  name: string;
-  neighborhood: string;
-  address: string;
-  lat: number;
-  lng: number;
-  image: string;
-  photograph: string;
-  cuisineType: string;
-  description: string;
-  capacity: number;
-  operatingHours: Prisma.JsonValue;
-  reservationSettings: Prisma.JsonValue;
-  averageRating: number | null;
-  commentsCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export function toRestaurantResponse(restaurant: RestaurantRecord): RestaurantResponse {
-  const commentsCount = restaurant._count.comments;
-  const averageRating =
-    commentsCount === 0
-      ? null
-      : restaurant.comments.reduce((total, comment) => total + comment.rating, 0) / commentsCount;
-
-  return {
-    id: restaurant.id,
-    name: restaurant.name,
-    neighborhood: restaurant.neighborhood,
-    address: restaurant.address,
-    lat: restaurant.lat,
-    lng: restaurant.lng,
-    image: restaurant.image,
-    photograph: restaurant.photograph,
-    cuisineType: restaurant.cuisineType,
-    description: restaurant.description,
-    capacity: restaurant.capacity,
-    operatingHours: restaurant.operatingHours,
-    reservationSettings: restaurant.reservationSettings,
-    averageRating,
-    commentsCount,
-    createdAt: restaurant.createdAt,
-    updatedAt: restaurant.updatedAt,
-  };
-}
 
 @Injectable()
 export class RestaurantsService {

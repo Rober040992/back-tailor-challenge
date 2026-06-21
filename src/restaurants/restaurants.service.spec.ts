@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { ConflictException, Logger, NotFoundException } from "@nestjs/common";
-import { RestaurantRecord, RestaurantsRepository } from "./restaurants.repository";
+import { RestaurantRecord } from "./restaurant-response";
+import { RestaurantsRepository } from "./restaurants.repository";
 import { RestaurantsService } from "./restaurants.service";
 
 function createRestaurantRecord(overrides: Partial<RestaurantRecord> = {}): RestaurantRecord {

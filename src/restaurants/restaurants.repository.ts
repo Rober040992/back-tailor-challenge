@@ -1,23 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-
-export const restaurantWithCommentRatings = Prisma.validator<Prisma.RestaurantDefaultArgs>()({
-  include: {
-    comments: {
-      select: {
-        rating: true,
-      },
-    },
-    _count: {
-      select: {
-        comments: true,
-      },
-    },
-  },
-});
-
-export type RestaurantRecord = Prisma.RestaurantGetPayload<typeof restaurantWithCommentRatings>;
+import { RestaurantRecord, restaurantWithCommentRatings } from "./restaurant-response";
 
 @Injectable()
 export class RestaurantsRepository {

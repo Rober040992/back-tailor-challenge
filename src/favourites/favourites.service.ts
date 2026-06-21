@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { logSafely } from "../common/logging/safe-logger";
-import { RestaurantResponse, toRestaurantResponse } from "../restaurants/restaurants.service";
+import { RestaurantResponse, toRestaurantResponse } from "../restaurants/restaurant-response";
 import {
   DuplicateFavouriteError,
   FavouriteRecord,

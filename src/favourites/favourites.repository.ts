@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { restaurantWithCommentRatings } from "../restaurants/restaurants.repository";
+import { restaurantWithCommentRatings } from "../restaurants/restaurant-response";
 
 const favouriteWithRestaurant = Prisma.validator<Prisma.FavouriteDefaultArgs>()({
   include: {

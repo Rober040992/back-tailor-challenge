@@ -17,7 +17,8 @@ import type { PublicUser } from "../auth/auth.repository";
 import { JwtAuthGuard } from "../auth/jwt/jwt-auth.guard";
 import { CreateRestaurantDto } from "./dto/create-restaurant.dto";
 import { UpdateRestaurantDto } from "./dto/update-restaurant.dto";
-import { RestaurantResponse, RestaurantsService } from "./restaurants.service";
+import { RestaurantResponse } from "./restaurant-response";
+import { RestaurantsService } from "./restaurants.service";
 
 interface AuthenticatedRequest extends Request {
   user: PublicUser;

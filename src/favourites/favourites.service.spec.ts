@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { ConflictException, Logger, NotFoundException } from "@nestjs/common";
-import { RestaurantRecord } from "../restaurants/restaurants.repository";
+import { RestaurantRecord } from "../restaurants/restaurant-response";
 import {
   DuplicateFavouriteError,
   FavouriteRecord,
