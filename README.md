@@ -4,7 +4,7 @@
 
 This repository contains the backend REST API for a restaurant reservation application. It is built with NestJS and TypeScript, uses PostgreSQL through Prisma ORM, and authenticates users with JWTs stored in HttpOnly cookies.
 
-The current implementation includes authentication, restaurant CRUD, on-demand availability, reservations, shared API error handling, Prisma models, and reproducible local seed data. Favourites and comment endpoints remain to be implemented.
+The current implementation includes authentication, restaurant CRUD, on-demand availability, reservations, centralized logging, shared API error handling, Prisma models, and reproducible local seed data. Favourites and comment endpoints remain to be implemented.
 
 ## Current feature status
 
@@ -17,6 +17,7 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 | Favourites | Not implemented yet | Prisma model and uniqueness constraint exist, but no module or endpoints are implemented |
 | Comments | Partially implemented | Seeded comments and rating aggregation exist; comment endpoints do not |
 | Error handling | Implemented | Global exception filter and structured validation details |
+| Logging | Implemented | Centralized HTTP, error, and important domain action logs |
 | Database seed | Implemented | Reproducible restaurant, comment, and user seed |
 | Tests | Partially implemented | Authentication, restaurants, availability, and reservations have service and/or e2e coverage |
 
@@ -443,6 +444,18 @@ The global exception filter returns one shared shape:
 ```
 
 `details` is included when supplied by the exception, including DTO validation failures. Unexpected errors are logged server-side and returned as a generic `500 Internal Server Error` response.
+
+## Logging
+
+The API uses the built-in NestJS `Logger` and writes logs to the local terminal.
+
+```txt
+[HTTP] POST /reservations 201 42ms userId=1
+[RESERVATION] created reservationId=12 restaurantId=1 userId=1 date=2026-07-10 time=13:30 partySize=4
+[ERROR] POST /reservations 409 The selected slot no longer has enough capacity.
+```
+
+HTTP logs include the method, path, status, duration, and authenticated user when available. Domain logs cover authentication, restaurant mutations, availability checks, and reservation actions. Passwords, JWTs, cookies, authorization headers, and request bodies are never logged.
 
 ## Main business rules
 
