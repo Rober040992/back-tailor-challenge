@@ -5,6 +5,6 @@ export class ReservationIdParamDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(99)
+  @Max(99999)
   reservationId!: number;
 }
