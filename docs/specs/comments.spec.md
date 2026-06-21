@@ -90,6 +90,7 @@ List response:
 * Deleting comments requires authentication.
 * A comment must be created using the authenticated user as author.
 * `userId`, `name` and `date` must be generated server-side.
+* `date` must be generated server-side using the current UTC date in `YYYY-MM-DD` format.
 * Only the comment author can update a comment.
 * Only the comment author can delete a comment.
 * Restaurant rating must continue to be calculated from comments, not stored as a mutable restaurant field.
