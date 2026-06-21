@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import { createValidationException } from "./common/errors/validation-error.factory";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { httpLoggingMiddleware } from "./common/middleware/http-logging.middleware";
+import { configureSwagger } from "./common/swagger/swagger.setup";
 
 export function configureApplication(app: INestApplication): void {
   app.use(httpLoggingMiddleware);
@@ -16,4 +17,5 @@ export function configureApplication(app: INestApplication): void {
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
+  configureSwagger(app);
 }

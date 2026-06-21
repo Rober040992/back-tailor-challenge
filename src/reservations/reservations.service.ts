@@ -14,6 +14,7 @@ import {
   ReservationsRepository,
   ReservationTransactionConflictError,
 } from "./reservations.repository";
+import { ReservationResponse } from "./reservation-response";
 
 const RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found.";
 const RESERVATION_NOT_FOUND_MESSAGE = "Reservation not found.";
@@ -22,8 +23,6 @@ const RESERVATION_IN_PAST_MESSAGE = "Reservation cannot be created in the past."
 const INVALID_TIME_SLOT_MESSAGE = "Reservation time does not match an available slot.";
 const CAPACITY_CONFLICT_MESSAGE = "The selected slot no longer has enough capacity.";
 const ALREADY_CANCELLED_MESSAGE = "Reservation is already cancelled.";
-
-export type ReservationResponse = Reservation;
 
 @Injectable()
 export class ReservationsService {

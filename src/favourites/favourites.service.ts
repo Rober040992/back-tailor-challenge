@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ApiProperty } from "@nestjs/swagger";
 import { logSafely } from "../common/logging/safe-logger";
 import { RestaurantResponse, toRestaurantResponse } from "../restaurants/restaurant-response";
 import {
@@ -12,15 +13,23 @@ const RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found.";
 const DUPLICATE_FAVOURITE_MESSAGE = "Restaurant is already a favourite.";
 const FAVOURITE_NOT_FOUND_MESSAGE = "Favourite not found.";
 
-export interface FavouriteResponse {
-  id: number;
-  restaurantId: number;
-  createdAt: Date;
-  restaurant: RestaurantResponse;
+export class FavouriteResponse {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 1 })
+  restaurantId!: number;
+
+  @ApiProperty({ type: String, format: "date-time" })
+  createdAt!: Date;
+
+  @ApiProperty({ type: RestaurantResponse })
+  restaurant!: RestaurantResponse;
 }
 
-export interface FavouritesResponse {
-  results: FavouriteResponse[];
+export class FavouritesResponse {
+  @ApiProperty({ type: [FavouriteResponse] })
+  results!: FavouriteResponse[];
 }
 
 @Injectable()

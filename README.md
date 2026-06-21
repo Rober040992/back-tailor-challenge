@@ -11,18 +11,19 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 
 ## Current feature status
 
-| Feature | Status | Current state |
-| --- | --- | --- |
-| Authentication | Implemented | Login, JWT cookie authentication, protected routes, and logout |
-| Restaurants CRUD | Implemented | Public reads and authenticated create, update, and delete |
-| Availability | Implemented | Public, on-demand slot calculation using settings, booked slots, and confirmed reservations |
-| Reservations | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement |
-| Favourites | Implemented | Authenticated add, owned list, and remove operations |
-| Comments | Implemented | Public listing and authenticated create, owned update, and owned delete operations |
-| Error handling | Implemented | Global exception filter and structured validation details |
-| Logging | Implemented | Centralized HTTP, error, and important domain action logs |
-| Database seed | Implemented | Reproducible restaurant, comment, and user seed |
-| Tests | Implemented | Authentication, restaurants, availability, reservations, favourites, and comments have service and/or e2e coverage |
+| Feature          | Status      | Current state                                                                                                               |
+| ---------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Authentication   | Implemented | Login, JWT cookie authentication, protected routes, and logout                                                              |
+| Restaurants CRUD | Implemented | Public reads and authenticated create, update, and delete                                                                   |
+| Availability     | Implemented | Public, on-demand slot calculation using settings, booked slots, and confirmed reservations                                 |
+| Reservations     | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement                         |
+| Favourites       | Implemented | Authenticated add, owned list, and remove operations                                                                        |
+| Comments         | Implemented | Public listing and authenticated create, owned update, and owned delete operations                                          |
+| Error handling   | Implemented | Global exception filter and structured validation details                                                                   |
+| Logging          | Implemented | Centralized HTTP, error, and important domain action logs                                                                   |
+| Database seed    | Implemented | Reproducible restaurant, comment, and user seed                                                                             |
+| Tests            | Implemented | Authentication, restaurants, availability, reservations, favourites, comments, and Swagger have service and/or e2e coverage |
+| Swagger          | Implemented | Local Swagger UI and OpenAPI JSON with production opt-in                                                                    |
 
 ## Tech stack
 
@@ -34,6 +35,7 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 - HttpOnly cookies through `cookie-parser`
 - `bcrypt` password hashing
 - `class-validator` and `class-transformer`
+- `@nestjs/swagger` for OpenAPI documentation
 - Jest and Supertest
 - ESLint and Prettier
 - npm
@@ -106,10 +108,11 @@ Copy `.env.example` to `.env` and replace the placeholders:
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/DATABASE_NAME_HERE?schema=public"
 JWT_SECRET="replace-with-a-safe-local-secret"
 PORT=3000
+SWAGGER_ENABLED=false
 ```
 
 > [!IMPORTANT]
-> `DATABASE_URL` and `JWT_SECRET` are required. `PORT` is optional and defaults to `3000`.
+> `DATABASE_URL` and `JWT_SECRET` are required. `PORT` is optional and defaults to `3000`. Swagger is always enabled outside production. In production, set `SWAGGER_ENABLED=true` to expose it.
 
 Do not commit `.env` or real credentials.
 
@@ -161,6 +164,13 @@ By default, the API is available at:
 
 ```txt
 http://localhost:3000
+```
+
+Swagger documentation is available locally at:
+
+```txt
+http://localhost:3000/docs
+http://localhost:3000/docs-json
 ```
 
 Other available scripts include:
@@ -266,7 +276,8 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 - Reservation creation uses a repository-managed serializable transaction while availability rules remain in the service layer.
 - Availability and Reservations share slot calculation without coupling their services.
 - Any authenticated user can mutate restaurants for the MVP; no admin role exists.
-- Swagger and Docker have not been added and remain optional final improvements.
+- Swagger is available locally and can be explicitly enabled in production.
+- Docker remains an optional final improvement.
 
 ## AI usage notes
 
@@ -279,7 +290,7 @@ Generated output was checked against `constitution.back.md`, the active specific
 - The e2e tests depend on a configured and seeded local database.
 - Frontend integration is not included in this repository.
 - The local authentication cookie is not configured for HTTPS production use.
-- Swagger documentation is not available.
+- Swagger is disabled by default when `NODE_ENV=production`.
 - Docker configuration is not available.
 - Production deployment configuration is not included.
 

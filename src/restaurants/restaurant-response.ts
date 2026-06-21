@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Prisma } from "@prisma/client";
 
 export const restaurantWithCommentRatings = Prisma.validator<Prisma.RestaurantDefaultArgs>()({
@@ -17,24 +18,57 @@ export const restaurantWithCommentRatings = Prisma.validator<Prisma.RestaurantDe
 
 export type RestaurantRecord = Prisma.RestaurantGetPayload<typeof restaurantWithCommentRatings>;
 
-export interface RestaurantResponse {
-  id: number;
-  name: string;
-  neighborhood: string;
-  address: string;
-  lat: number;
-  lng: number;
-  image: string;
-  photograph: string;
-  cuisineType: string;
-  description: string;
-  capacity: number;
-  operatingHours: Prisma.JsonValue;
-  reservationSettings: Prisma.JsonValue;
-  averageRating: number | null;
-  commentsCount: number;
-  createdAt: Date;
-  updatedAt: Date;
+export class RestaurantResponse {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: "The Example Table" })
+  name!: string;
+
+  @ApiProperty({ example: "Downtown" })
+  neighborhood!: string;
+
+  @ApiProperty({ example: "123 Example Street" })
+  address!: string;
+
+  @ApiProperty({ example: 40.4168 })
+  lat!: number;
+
+  @ApiProperty({ example: -3.7038 })
+  lng!: number;
+
+  @ApiProperty({ example: "https://example.com/restaurant.jpg" })
+  image!: string;
+
+  @ApiProperty({ example: "https://example.com/restaurant-detail.jpg" })
+  photograph!: string;
+
+  @ApiProperty({ example: "Mediterranean" })
+  cuisineType!: string;
+
+  @ApiProperty({ example: "Seasonal Mediterranean cuisine." })
+  description!: string;
+
+  @ApiProperty({ example: 40 })
+  capacity!: number;
+
+  @ApiProperty({ type: Object, additionalProperties: true })
+  operatingHours!: Prisma.JsonValue;
+
+  @ApiProperty({ type: Object, additionalProperties: true })
+  reservationSettings!: Prisma.JsonValue;
+
+  @ApiProperty({ example: 4.5, nullable: true })
+  averageRating!: number | null;
+
+  @ApiProperty({ example: 12 })
+  commentsCount!: number;
+
+  @ApiProperty({ type: String, format: "date-time" })
+  createdAt!: Date;
+
+  @ApiProperty({ type: String, format: "date-time" })
+  updatedAt!: Date;
 }
 
 export function toRestaurantResponse(restaurant: RestaurantRecord): RestaurantResponse {

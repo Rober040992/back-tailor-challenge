@@ -9,10 +9,20 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
+import {
+  ApiBadRequestResponse,
+  ApiCookieAuth,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { logSafely } from "../common/logging/safe-logger";
 import type { PublicUser } from "./auth.repository";
 import { AuthService } from "./auth.service";
+import { AuthUserResponseDto } from "./dto/auth-user-response.dto";
 import { LoginDto } from "./dto/login.dto";
 import { JwtAuthGuard } from "./jwt/jwt-auth.guard";
 
@@ -30,6 +40,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller("auth")
+@ApiTags("auth")
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -37,6 +48,13 @@ export class AuthController {
 
   @Post("login")
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Log in with a seeded user account" })
+  @ApiOkResponse({
+    description: "Authentication succeeded and the access_token cookie was set.",
+    type: AuthUserResponseDto,
+  })
+  @ApiBadRequestResponse({ description: "The request body failed validation." })
+  @ApiUnauthorizedResponse({ description: "The username or password is invalid." })
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
@@ -51,6 +69,10 @@ export class AuthController {
   @Post("logout")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiCookieAuth(ACCESS_TOKEN_COOKIE)
+  @ApiOperation({ summary: "Log out and clear the authentication cookie" })
+  @ApiNoContentResponse({ description: "The authentication cookie was cleared." })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
   logout(
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,

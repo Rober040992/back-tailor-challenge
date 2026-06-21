@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import {
   IsDateString,
@@ -28,6 +29,7 @@ const IsTodayOrLater = () =>
   });
 
 export class AvailabilityQueryDto {
+  @ApiProperty({ example: "2026-07-10", format: "date" })
   @IsString()
   @IsNotEmpty()
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
@@ -35,6 +37,7 @@ export class AvailabilityQueryDto {
   @IsTodayOrLater()
   date!: string;
 
+  @ApiProperty({ example: 4, minimum: 1, maximum: 99 })
   @Type(() => Number)
   @IsInt()
   @Min(1)
