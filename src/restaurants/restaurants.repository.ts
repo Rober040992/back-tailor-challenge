@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
-const restaurantWithCommentRatings = Prisma.validator<Prisma.RestaurantDefaultArgs>()({
+export const restaurantWithCommentRatings = Prisma.validator<Prisma.RestaurantDefaultArgs>()({
   include: {
     comments: {
       select: {
