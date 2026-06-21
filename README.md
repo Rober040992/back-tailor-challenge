@@ -4,7 +4,7 @@
 
 This repository contains the backend REST API for a restaurant reservation application. It is built with NestJS and TypeScript, uses PostgreSQL through Prisma ORM, and authenticates users with JWTs stored in HttpOnly cookies.
 
-The current implementation includes authentication, restaurant CRUD, on-demand availability, shared API error handling, Prisma models, and reproducible local seed data. Other reservation-platform features remain to be implemented.
+The current implementation includes authentication, restaurant CRUD, on-demand availability, reservations, shared API error handling, Prisma models, and reproducible local seed data. Favourites and comment endpoints remain to be implemented.
 
 ## Current feature status
 
@@ -13,12 +13,12 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 | Authentication | Implemented | Login, JWT cookie authentication, protected routes, and logout |
 | Restaurants CRUD | Implemented | Public reads and authenticated create, update, and delete |
 | Availability | Implemented | Public, on-demand slot calculation using settings, booked slots, and confirmed reservations |
-| Reservations | Not implemented yet | Prisma model exists, but no module or endpoints are implemented |
+| Reservations | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement |
 | Favourites | Not implemented yet | Prisma model and uniqueness constraint exist, but no module or endpoints are implemented |
 | Comments | Partially implemented | Seeded comments and rating aggregation exist; comment endpoints do not |
 | Error handling | Implemented | Global exception filter and structured validation details |
 | Database seed | Implemented | Reproducible restaurant, comment, and user seed |
-| Tests | Partially implemented | Authentication, restaurants, and availability have service and/or e2e coverage |
+| Tests | Partially implemented | Authentication, restaurants, availability, and reservations have service and/or e2e coverage |
 
 ## Tech stack
 
@@ -69,6 +69,8 @@ HTTP -> Controller -> Service -> Repository -> Database
 |   |   |-- errors/
 |   |   `-- filters/
 |   |-- prisma/
+|   |-- reservations/
+|   |   `-- dto/
 |   |-- restaurants/
 |   |   `-- dto/
 |   |-- app.module.ts
@@ -234,10 +236,14 @@ The seed hashes these passwords with `bcrypt` before storing them.
 | `POST` | `/restaurants` | Create a restaurant |
 | `PATCH` | `/restaurants/:id` | Update accepted fields on a restaurant |
 | `DELETE` | `/restaurants/:id` | Delete a restaurant that has no related records |
+| `POST` | `/reservations` | Create a confirmed reservation after recalculating slot availability |
+| `GET` | `/me/reservations` | List the authenticated user's reservations, newest first |
+| `GET` | `/reservations/:reservationId` | Get an owned reservation |
+| `PATCH` | `/reservations/:reservationId/cancel` | Cancel an owned confirmed reservation |
 
 ### Endpoints not implemented yet
 
-There are currently no reservation, favourite, or comment endpoints. Their routes are defined as future requirements in the project constitution but are not registered by the application.
+There are currently no favourite or comment endpoints. Their routes are defined as future requirements in the project constitution but are not registered by the application.
 
 ## Request examples
 
@@ -352,6 +358,60 @@ Example response:
 
 The `date` must be a real `YYYY-MM-DD` date that is today or later. `partySize` must be an integer from `1` to `99`. A missing or invalid query value returns `400 Bad Request`; an unknown restaurant returns `404 Not Found`.
 
+### Create a reservation
+
+This request requires the login cookie:
+
+```http
+POST /reservations
+Content-Type: application/json
+```
+
+```json
+{
+  "restaurantId": 1,
+  "date": "2026-07-10",
+  "time": "13:30",
+  "partySize": 4
+}
+```
+
+The authenticated user is taken from the JWT. Unknown fields, including `userId` and `status`, are rejected.
+
+Example response:
+
+```json
+{
+  "id": 1,
+  "restaurantId": 1,
+  "userId": 1,
+  "date": "2026-07-10",
+  "time": "13:30",
+  "partySize": 4,
+  "status": "confirmed",
+  "createdAt": "2026-06-21T10:00:00.000Z",
+  "updatedAt": "2026-06-21T10:00:00.000Z",
+  "cancelledAt": null
+}
+```
+
+### Read reservations
+
+```http
+GET /me/reservations
+GET /reservations/1
+```
+
+Users can list and read only their own reservations. The list is ordered by creation time descending.
+
+### Cancel a reservation
+
+```http
+PATCH /reservations/1/cancel
+```
+
+Cancellation returns the complete updated reservation with `status: "cancelled"` and `cancelledAt` set. Cancelling an already cancelled reservation returns `409 Conflict`.
+
 ## Postman usage
 
 1. Run the migration and seed steps, then start the API.
@@ -411,8 +471,18 @@ The currently implemented business rules are:
 - Every generated slot is returned, including unavailable slots.
 - A slot is marked available only when it can fit the requested party size.
 - Checking availability does not create or update reservations or mutate seeded booked slots.
+- Reservations belong to the authenticated user and cannot be created for another user.
+- Reservation dates and times are validated in UTC and cannot be in the past.
+- Reservation times must match a generated restaurant slot.
+- Reservation creation recalculates availability inside a serializable database transaction.
+- Concurrent requests cannot consume more capacity than the slot provides.
+- Transaction conflicts are retried; unavailable capacity returns `409 Conflict`.
+- Availability calculation is shared through a database-free `AvailabilityCalculator`.
+- Creating a reservation consumes capacity; cancelling it releases capacity.
+- Users can list, read, and cancel only their own reservations.
+- A cancelled reservation cannot be cancelled again.
 
-Reservation creation, reservation cancellation, duplicate favourite handling, and comment ownership rules are not implemented yet.
+Duplicate favourite handling and comment ownership rules are not implemented yet.
 
 ## Technical decisions and trade-offs
 
@@ -422,6 +492,8 @@ Reservation creation, reservation cancellation, duplicate favourite handling, an
 - Authentication uses a JWT in an HttpOnly cookie instead of database token storage.
 - Registration is intentionally out of scope; local testing uses four predefined users.
 - The application uses a direct controller/service/repository structure without additional architectural layers.
+- Reservation creation uses a repository-managed serializable transaction while availability rules remain in the service layer.
+- Availability and Reservations share slot calculation without coupling their services.
 - Any authenticated user can mutate restaurants for the MVP; no admin role exists.
 - Swagger and Docker have not been added and remain optional final improvements.
 
@@ -433,10 +505,9 @@ Generated output was checked against `constitution.back.md`, the active specific
 
 ## Current limitations
 
-- Reservation endpoints and business logic are not implemented.
 - Favourite endpoints and ownership logic are not implemented.
 - Comment endpoints and ownership logic are not implemented.
-- Test coverage currently focuses on authentication, restaurants, and availability.
+- Test coverage currently focuses on authentication, restaurants, availability, and reservations.
 - The e2e tests depend on a configured and seeded local database.
 - Frontend integration is not included in this repository.
 - The local authentication cookie is not configured for HTTPS production use.
@@ -457,10 +528,13 @@ Generated output was checked against `constitution.back.md`, the active specific
 9. Call `GET /restaurants` and `GET /restaurants/1`.
 10. Call `GET /restaurants/1/availability?date=2026-07-10&partySize=4`.
 11. Verify that booked slots reduce `availableSeats` and that the response includes unavailable slots.
-12. Create a restaurant with authenticated `POST /restaurants`.
-13. Update it with authenticated `PATCH /restaurants/:id`.
-14. Delete it with authenticated `DELETE /restaurants/:id`.
-15. Call `POST /auth/logout`.
-16. Run `npm run test`, `npm run test:e2e`, and `npm run build`.
-
-Reservation creation and cancellation cannot be verified until the reservations module is implemented.
+12. Create a reservation with authenticated `POST /reservations`.
+13. List it with `GET /me/reservations`.
+14. Read it with `GET /reservations/:reservationId`.
+15. Cancel it with `PATCH /reservations/:reservationId/cancel`.
+16. Verify that the cancelled reservation no longer reduces availability.
+17. Create a restaurant with authenticated `POST /restaurants`.
+18. Update it with authenticated `PATCH /restaurants/:id`.
+19. Delete it with authenticated `DELETE /restaurants/:id`.
+20. Call `POST /auth/logout`.
+21. Run `npm run test`, `npm run test:e2e`, and `npm run build`.
