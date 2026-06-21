@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { BadRequestException, ForbiddenException, Logger, NotFoundException } from "@nestjs/common";
 import { Comment } from "@prisma/client";
-import { CommentRestaurantNotFoundError, CommentsRepository } from "./comments.repository";
+import {
+  CommentNotFoundError,
+  CommentRestaurantNotFoundError,
+  CommentsRepository,
+} from "./comments.repository";
 import { CommentsService } from "./comments.service";
 
 function createComment(overrides: Partial<Comment> = {}): Comment {
@@ -123,6 +127,15 @@ describe("CommentsService", () => {
     commentsRepository.findById.mockResolvedValue(null);
 
     await expect(commentsService.update(1, 999, { rating: 5 })).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it("returns not found when the comment disappears during update", async () => {
+    commentsRepository.findById.mockResolvedValue(createComment());
+    commentsRepository.update.mockRejectedValue(new CommentNotFoundError());
+
+    await expect(commentsService.update(1, 1, { rating: 5 })).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });

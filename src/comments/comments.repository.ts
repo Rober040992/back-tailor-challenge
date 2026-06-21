@@ -4,6 +4,8 @@ import { PrismaService } from "../prisma/prisma.service";
 
 export class CommentRestaurantNotFoundError extends Error {}
 
+export class CommentNotFoundError extends Error {}
+
 @Injectable()
 export class CommentsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -41,11 +43,19 @@ export class CommentsRepository {
     }
   }
 
-  update(commentId: number, data: Prisma.CommentUpdateInput): Promise<Comment> {
-    return this.prisma.comment.update({
-      where: { id: commentId },
-      data,
-    });
+  async update(commentId: number, data: Prisma.CommentUpdateInput): Promise<Comment> {
+    try {
+      return await this.prisma.comment.update({
+        where: { id: commentId },
+        data,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+        throw new CommentNotFoundError();
+      }
+
+      throw error;
+    }
   }
 
   async delete(commentId: number): Promise<boolean> {

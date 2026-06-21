@@ -8,7 +8,11 @@ import {
 import type { PublicUser } from "../auth/auth.repository";
 import { logSafely } from "../common/logging/safe-logger";
 import { CommentResponse, CommentsResponse } from "./comment-response";
-import { CommentRestaurantNotFoundError, CommentsRepository } from "./comments.repository";
+import {
+  CommentNotFoundError,
+  CommentRestaurantNotFoundError,
+  CommentsRepository,
+} from "./comments.repository";
 import { CreateCommentDto } from "./dto/create-comment.dto";
 import { UpdateCommentDto } from "./dto/update-comment.dto";
 
@@ -79,7 +83,17 @@ export class CommentsService {
     const comment = await this.findExisting(commentId);
     this.assertOwnership(comment.userId, userId);
 
-    const updatedComment = await this.commentsRepository.update(commentId, updateCommentDto);
+    let updatedComment: CommentResponse;
+
+    try {
+      updatedComment = await this.commentsRepository.update(commentId, updateCommentDto);
+    } catch (error) {
+      if (error instanceof CommentNotFoundError) {
+        throw new NotFoundException(COMMENT_NOT_FOUND_MESSAGE);
+      }
+
+      throw error;
+    }
 
     logSafely(this.logger, "log", `[COMMENT] updated commentId=${commentId} userId=${userId}`);
 
