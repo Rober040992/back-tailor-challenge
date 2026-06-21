@@ -6,6 +6,8 @@ This repository contains the backend REST API for a restaurant reservation appli
 
 The current implementation includes authentication, restaurant CRUD, on-demand availability, reservations, favourites, comments, centralized logging, shared API error handling, Prisma models, and reproducible local seed data.
 
+For all implemented routes, request bodies, responses, validation rules, and Postman instructions, see the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md).
+
 ## Current feature status
 
 | Feature | Status | Current state |
@@ -85,6 +87,7 @@ HTTP -> Controller -> Service -> Repository -> Database
 |-- .env.example
 |-- constitution.back.md
 |-- package.json
+|-- POSTMAN_ENDPOINTS_GUIDE.md
 `-- prisma.config.ts
 ```
 
@@ -179,364 +182,22 @@ The e2e tests use the configured PostgreSQL database and expect the seed users a
 
 Note that `npm run lint` uses ESLint's automatic fix mode and may modify files.
 
-## Authentication
+## Authentication and sample credentials
 
-`POST /auth/login` validates a seeded username and password. After successful validation, the API signs a JWT containing the user's ID and username and returns the public user:
+Authentication uses a JWT stored in the `access_token` HttpOnly cookie. Tokens expire after 24 hours, are not stored in the database, and are cleared on logout. Registration is out of scope.
 
-```json
-{
-  "id": 1,
-  "username": "roberto"
-}
-```
+The local cookie uses `SameSite=Lax` and `Secure=false`, which is intended for local HTTP development.
 
-The JWT:
-
-- is created only after successful credential validation;
-- expires after 24 hours;
-- is stored in an `access_token` HttpOnly cookie;
-- is read from that cookie by protected endpoints;
-- is not stored in the database.
-
-`POST /auth/logout` requires authentication and clears the cookie. Registration is out of scope.
-
-The current cookie configuration is intended for local HTTP development: `SameSite=Lax` and `Secure=false`.
-
-## Sample credentials
-
-The Prisma seed creates exactly these local users:
+The seed creates four users with password `12345`:
 
 ```txt
-username: roberto
-password: 12345
-
-username: lautaro
-password: 12345
-
-username: nico
-password: 12345
-
-username: aida
-password: 12345
+roberto
+lautaro
+nico
+aida
 ```
 
-The seed hashes these passwords with `bcrypt` before storing them.
-
-## API endpoints
-
-### Public endpoints
-
-| Method | Path | Description |
-| --- | --- | --- |
-| `POST` | `/auth/login` | Validate credentials, set the authentication cookie, and return the user |
-| `GET` | `/restaurants` | List restaurants with calculated rating information |
-| `GET` | `/restaurants/:id` | Get one restaurant by integer ID |
-| `GET` | `/restaurants/:restaurantId/availability?date=YYYY-MM-DD&partySize=4` | Calculate reservation slots for a restaurant, date, and party size |
-| `GET` | `/restaurants/:restaurantId/comments` | List comments for a restaurant |
-
-### Protected endpoints
-
-| Method | Path | Description |
-| --- | --- | --- |
-| `POST` | `/auth/logout` | Clear the authentication cookie |
-| `POST` | `/restaurants` | Create a restaurant |
-| `PATCH` | `/restaurants/:id` | Update accepted fields on a restaurant |
-| `DELETE` | `/restaurants/:id` | Delete a restaurant that has no related records |
-| `POST` | `/reservations` | Create a confirmed reservation after recalculating slot availability |
-| `GET` | `/me/reservations` | List the authenticated user's reservations, newest first |
-| `GET` | `/reservations/:reservationId` | Get an owned reservation |
-| `PATCH` | `/reservations/:reservationId/cancel` | Cancel an owned confirmed reservation |
-| `GET` | `/me/favourites` | List the authenticated user's favourite restaurants |
-| `POST` | `/me/favourites/:restaurantId` | Add a restaurant to the authenticated user's favourites |
-| `DELETE` | `/me/favourites/:restaurantId` | Remove an owned favourite |
-| `POST` | `/restaurants/:restaurantId/comments` | Create a comment as the authenticated user |
-| `PATCH` | `/comments/:commentId` | Update an owned comment |
-| `DELETE` | `/comments/:commentId` | Delete an owned comment |
-
-## Request examples
-
-### Login
-
-```http
-POST /auth/login
-Content-Type: application/json
-```
-
-```json
-{
-  "username": "aida",
-  "password": "12345"
-}
-```
-
-### Create a restaurant
-
-This request requires the login cookie:
-
-```http
-POST /restaurants
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "Example Restaurant",
-  "neighborhood": "Manhattan",
-  "address": "123 Example St",
-  "lat": 40.713829,
-  "lng": -73.989667,
-  "image": "https://example.com/image.jpg",
-  "photograph": "example.jpg",
-  "cuisineType": "Asian",
-  "description": "Short restaurant description.",
-  "capacity": 72,
-  "operatingHours": {
-    "Monday": "5:30 pm - 11:00 pm"
-  },
-  "reservationSettings": {
-    "slotIntervalMinutes": 30,
-    "defaultSlotCapacity": 8,
-    "serviceWindows": [
-      {
-        "name": "lunch",
-        "start": "13:00",
-        "end": "15:00"
-      },
-      {
-        "name": "dinner",
-        "start": "20:00",
-        "end": "23:00"
-      }
-    ],
-    "bookedSlots": []
-  }
-}
-```
-
-All create fields are required. `capacity` must be an integer of at least `1`; `operatingHours` and `reservationSettings` must be JSON objects.
-
-### Update a restaurant
-
-The update payload accepts any subset of the create fields:
-
-```http
-PATCH /restaurants/1
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "Updated Restaurant Name",
-  "capacity": 80
-}
-```
-
-### Check availability
-
-This endpoint is public:
-
-```http
-GET /restaurants/1/availability?date=2026-07-10&partySize=4
-```
-
-Example response:
-
-```json
-{
-  "restaurantId": 1,
-  "date": "2026-07-10",
-  "slots": [
-    {
-      "time": "13:00",
-      "capacity": 8,
-      "reservedSeats": 8,
-      "availableSeats": 0,
-      "available": false
-    },
-    {
-      "time": "13:30",
-      "capacity": 8,
-      "reservedSeats": 3,
-      "availableSeats": 5,
-      "available": true
-    }
-  ]
-}
-```
-
-The `date` must be a real `YYYY-MM-DD` date that is today or later. `partySize` must be an integer from `1` to `99`. A missing or invalid query value returns `400 Bad Request`; an unknown restaurant returns `404 Not Found`.
-
-### Create a reservation
-
-This request requires the login cookie:
-
-```http
-POST /reservations
-Content-Type: application/json
-```
-
-```json
-{
-  "restaurantId": 1,
-  "date": "2026-07-10",
-  "time": "13:30",
-  "partySize": 4
-}
-```
-
-The authenticated user is taken from the JWT. Unknown fields, including `userId` and `status`, are rejected.
-
-Example response:
-
-```json
-{
-  "id": 1,
-  "restaurantId": 1,
-  "userId": 1,
-  "date": "2026-07-10",
-  "time": "13:30",
-  "partySize": 4,
-  "status": "confirmed",
-  "createdAt": "2026-06-21T10:00:00.000Z",
-  "updatedAt": "2026-06-21T10:00:00.000Z",
-  "cancelledAt": null
-}
-```
-
-### Read reservations
-
-```http
-GET /me/reservations
-GET /reservations/1
-```
-
-Users can list and read only their own reservations. The list is ordered by creation time descending.
-
-### Cancel a reservation
-
-```http
-PATCH /reservations/1/cancel
-```
-
-Cancellation returns the complete updated reservation with `status: "cancelled"` and `cancelledAt` set. Cancelling an already cancelled reservation returns `409 Conflict`.
-
-### Manage favourites
-
-All favourite endpoints require the login cookie. Adding and removing a favourite do not require a request body.
-
-```http
-POST /me/favourites/1
-GET /me/favourites
-DELETE /me/favourites/1
-```
-
-Creating a favourite returns `201 Created`:
-
-```json
-{
-  "id": 1,
-  "restaurantId": 1,
-  "createdAt": "2026-06-21T10:00:00.000Z",
-  "restaurant": {
-    "id": 1,
-    "name": "Mission Chinese Food",
-    "averageRating": 3.6666666666666665,
-    "commentsCount": 3
-  }
-}
-```
-
-The nested `restaurant` contains the complete restaurant response, not only the abbreviated fields shown above.
-
-Listing favourites returns:
-
-```json
-{
-  "results": []
-}
-```
-
-Results contain only the authenticated user's favourites and are ordered by `createdAt` descending, then by favourite `id` descending. Duplicate favourites return `409 Conflict`. Removing a favourite returns `204 No Content` and does not delete the restaurant.
-
-### Read comments
-
-Comment listing is public:
-
-```http
-GET /restaurants/1/comments
-```
-
-```json
-{
-  "results": [
-    {
-      "id": 1,
-      "restaurantId": 1,
-      "userId": 1,
-      "name": "roberto",
-      "date": "2026-06-21",
-      "rating": 4,
-      "body": "Great food and good service.",
-      "createdAt": "2026-06-21T10:00:00.000Z",
-      "updatedAt": "2026-06-21T10:00:00.000Z"
-    }
-  ]
-}
-```
-
-An existing restaurant without comments returns an empty `results` array.
-
-### Create a comment
-
-This request requires the login cookie:
-
-```http
-POST /restaurants/1/comments
-Content-Type: application/json
-```
-
-```json
-{
-  "rating": 4,
-  "body": "Great food and service."
-}
-```
-
-`rating` must be an integer from `1` to `5`. `body` must contain non-whitespace text and cannot exceed 1000 characters. The API generates `userId`, `name`, and the current UTC `date` from the authenticated user and server time.
-
-### Update or delete a comment
-
-Only the comment author can perform these operations:
-
-```http
-PATCH /comments/1
-Content-Type: application/json
-```
-
-```json
-{
-  "rating": 5,
-  "body": "Updated review."
-}
-```
-
-An update may contain `rating`, `body`, or both, but it cannot be empty. Deleting a comment uses:
-
-```http
-DELETE /comments/1
-```
-
-Successful deletion returns `204 No Content`. An authenticated non-author receives `403 Forbidden`.
-
-## Postman usage
-
-1. Run the migration and seed steps, then start the API.
-2. Send `POST /auth/login` with one of the sample users.
-3. Allow Postman to retain the `access_token` HttpOnly cookie.
-4. Call protected endpoints from the same Postman session.
-5. Send `POST /auth/logout` to clear the cookie.
-
-The token does not need to be copied into an `Authorization` header.
+Passwords are hashed with `bcrypt`. See the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md) for login, logout, endpoint access, request bodies, and responses.
 
 ## Error format
 
@@ -574,56 +235,17 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 
 ## Main business rules
 
-The currently implemented business rules are:
-
-- Restaurant ratings are calculated from persisted comments and are not stored on the restaurant.
-- Restaurant responses include `averageRating` and `commentsCount`.
-- `averageRating` is `null` when a restaurant has no comments.
-- Restaurant reads are public.
-- Restaurant mutations require a valid authenticated user; there is no admin role.
-- Create requests require all restaurant DTO fields.
-- Update requests accept a partial set of the same fields.
-- Unknown request fields are rejected.
-- Restaurant capacity must be an integer greater than or equal to `1`.
-- A missing restaurant returns `404 Not Found`.
-- A restaurant with comments, favourites, or reservations cannot be deleted and returns `409 Conflict`.
-- Invalid login credentials always return the same public message.
-- The seed keeps service windows and booked slots inside `Restaurant.reservationSettings`.
-- Availability is generated on demand and is not stored in a separate database model.
-- Availability slots come from each restaurant's service windows and slot interval.
-- Service window start times are included and end times are excluded.
-- Slot capacity comes from `reservationSettings.defaultSlotCapacity`.
-- Matching seeded booked slots and confirmed reservations reduce available seats.
-- Cancelled reservations do not reduce available seats.
-- Available seats never fall below zero.
-- Every generated slot is returned, including unavailable slots.
-- A slot is marked available only when it can fit the requested party size.
-- Checking availability does not create or update reservations or mutate seeded booked slots.
-- Reservations belong to the authenticated user and cannot be created for another user.
-- Reservation dates and times are validated in UTC and cannot be in the past.
-- Reservation times must match a generated restaurant slot.
-- Reservation creation recalculates availability inside a serializable database transaction.
-- Concurrent requests cannot consume more capacity than the slot provides.
-- Transaction conflicts are retried; unavailable capacity returns `409 Conflict`.
-- Availability calculation is shared through a database-free `AvailabilityCalculator`.
-- Creating a reservation consumes capacity; cancelling it releases capacity.
+- Restaurant ratings are calculated from comments and are not stored as mutable fields.
+- Restaurant mutations require authentication; no admin role exists for the MVP.
+- Restaurants with related comments, favourites, or reservations cannot be deleted.
+- Availability is generated on demand from service windows, slot capacity, seeded booked slots, and confirmed reservations.
+- Cancelled reservations release capacity and do not reduce availability.
+- Reservation creation recalculates availability inside a serializable transaction.
+- Reservations belong to users, cannot be created in the past, and must use generated restaurant slots.
 - Users can list, read, and cancel only their own reservations.
-- A cancelled reservation cannot be cancelled again.
-- Favourites belong to the authenticated user.
-- Favourite lists contain enriched restaurant responses and only the current user's records.
-- Duplicate favourites return `409 Conflict`.
-- Removing a missing or unowned favourite returns `404 Not Found`.
-- Removing a favourite deletes only the relation and leaves the restaurant unchanged.
-- Restaurant and favourite path IDs must be positive integers.
-- Comments can be listed publicly for an existing restaurant.
-- Comment creation uses the authenticated user's ID and username as the author.
-- Comment dates are generated server-side from the current UTC date.
-- Comment ratings must be integers from `1` to `5`.
-- Comment bodies must contain non-whitespace text and cannot exceed 1000 characters.
-- Only a comment author can update or delete that comment.
-- Updating or deleting another user's comment returns `403 Forbidden`.
-- Comment updates require at least one editable field.
-- Restaurant rating remains calculated from comments instead of being stored as a mutable field.
+- Favourites belong to users, cannot be duplicated, and removing one does not delete the restaurant.
+- Comments use the authenticated user as author; only authors can update or delete them.
+- Initial service windows and booked slots remain inside `Restaurant.reservationSettings`.
 
 ## Technical decisions and trade-offs
 
