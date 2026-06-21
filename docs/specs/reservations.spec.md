@@ -84,6 +84,7 @@ Success status codes:
 * Reservation time must match one generated slot for the restaurant.
 * Reservation creation must run inside a database transaction.
 * Availability must be recalculated inside that transaction before creating the reservation.
+* The repository must expose `createWithAvailabilityCheck` to encapsulate the serializable transaction and retry handling.
 * Slot calculation must be shared through an `AvailabilityCalculator` with no database access.
 * `ReservationsService` must use the calculator directly and must not depend on `AvailabilityService`.
 * Concurrent requests must not allow slot capacity to be exceeded.

@@ -7,46 +7,44 @@ const MAX_TRANSACTION_ATTEMPTS = 3;
 
 export class ReservationTransactionConflictError extends Error {}
 
-export interface ReservationTransaction {
-  findRestaurantAvailabilityData(
-    restaurantId: number,
-    date: string,
-  ): Promise<AvailabilityRestaurantRecord | null>;
-  createReservation(data: Prisma.ReservationUncheckedCreateInput): Promise<Reservation>;
-}
+type AvailabilityCheck = (restaurant: AvailabilityRestaurantRecord | null) => void;
 
 @Injectable()
 export class ReservationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async runSerializableTransaction<T>(
-    operation: (transaction: ReservationTransaction) => Promise<T>,
-  ): Promise<T> {
+  async createWithAvailabilityCheck(
+    data: Prisma.ReservationUncheckedCreateInput,
+    checkAvailability: AvailabilityCheck,
+  ): Promise<Reservation> {
     for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
       try {
         return await this.prisma.$transaction(
-          transaction =>
-            operation({
-              findRestaurantAvailabilityData: (restaurantId, date) =>
-                transaction.restaurant.findUnique({
-                  where: { id: restaurantId },
-                  select: {
-                    id: true,
-                    reservationSettings: true,
-                    reservations: {
-                      where: {
-                        date,
-                        status: "confirmed",
-                      },
-                      select: {
-                        time: true,
-                        partySize: true,
-                      },
-                    },
+          async transaction => {
+            const restaurant = await transaction.restaurant.findUnique({
+              where: { id: data.restaurantId },
+              select: {
+                id: true,
+                reservationSettings: true,
+                reservations: {
+                  where: {
+                    date: data.date,
+                    status: "confirmed",
                   },
-                }),
-              createReservation: data => transaction.reservation.create({ data }),
-            }),
+                  select: {
+                    time: true,
+                    partySize: true,
+                  },
+                },
+              },
+            });
+
+            checkAvailability(restaurant);
+
+            return transaction.reservation.create({
+              data,
+            });
+          },
           {
             isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
           },

@@ -3,7 +3,7 @@ import { BadRequestException, ConflictException } from "@nestjs/common";
 import { Reservation } from "@prisma/client";
 import { AvailabilityCalculator } from "../availability/availability.calculator";
 import { AvailabilityRestaurantRecord } from "../availability/availability.repository";
-import { ReservationsRepository, ReservationTransaction } from "./reservations.repository";
+import { ReservationsRepository } from "./reservations.repository";
 import { ReservationsService } from "./reservations.service";
 
 const reservationSettings = {
@@ -43,30 +43,29 @@ function createReservation(overrides: Partial<Reservation> = {}): Reservation {
 describe("ReservationsService", () => {
   let reservationsService: ReservationsService;
   let reservationsRepository: {
-    runSerializableTransaction: jest.Mock;
+    createWithAvailabilityCheck: jest.Mock;
     findByUserId: jest.MockedFunction<ReservationsRepository["findByUserId"]>;
     findById: jest.MockedFunction<ReservationsRepository["findById"]>;
     cancelConfirmed: jest.MockedFunction<ReservationsRepository["cancelConfirmed"]>;
   };
-  let transaction: {
-    findRestaurantAvailabilityData: jest.MockedFunction<
-      ReservationTransaction["findRestaurantAvailabilityData"]
-    >;
-    createReservation: jest.MockedFunction<ReservationTransaction["createReservation"]>;
-  };
+  let restaurant: AvailabilityRestaurantRecord | null;
+  let createdReservation: Reservation;
 
   beforeEach(() => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-06-20T10:00:00.000Z"));
 
-    transaction = {
-      findRestaurantAvailabilityData: jest.fn(),
-      createReservation: jest.fn(),
-    };
+    restaurant = createRestaurantRecord();
+    createdReservation = createReservation();
     reservationsRepository = {
-      runSerializableTransaction: jest.fn(
-        async (operation: (value: ReservationTransaction) => Promise<unknown>) =>
-          operation(transaction),
+      createWithAvailabilityCheck: jest.fn(
+        async (
+          _data: unknown,
+          checkAvailability: (value: AvailabilityRestaurantRecord | null) => void,
+        ) => {
+          checkAvailability(restaurant);
+          return createdReservation;
+        },
       ),
       findByUserId: jest.fn(),
       findById: jest.fn(),
@@ -84,8 +83,7 @@ describe("ReservationsService", () => {
 
   it("creates a confirmed reservation when the slot has enough available seats", async () => {
     const reservation = createReservation();
-    transaction.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
-    transaction.createReservation.mockResolvedValue(reservation);
+    createdReservation = reservation;
 
     await expect(
       reservationsService.create(1, {
@@ -95,20 +93,19 @@ describe("ReservationsService", () => {
         partySize: 2,
       }),
     ).resolves.toEqual(reservation);
-    expect(transaction.createReservation).toHaveBeenCalledWith(
+    expect(reservationsRepository.createWithAvailabilityCheck).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 1,
         status: "confirmed",
       }),
+      expect.any(Function),
     );
   });
 
   it("rejects overbooking with conflict", async () => {
-    transaction.findRestaurantAvailabilityData.mockResolvedValue(
-      createRestaurantRecord({
-        reservations: [{ time: "13:30", partySize: 7 }],
-      }),
-    );
+    restaurant = createRestaurantRecord({
+      reservations: [{ time: "13:30", partySize: 7 }],
+    });
 
     await expect(
       reservationsService.create(1, {
@@ -118,7 +115,6 @@ describe("ReservationsService", () => {
         partySize: 2,
       }),
     ).rejects.toBeInstanceOf(ConflictException);
-    expect(transaction.createReservation).not.toHaveBeenCalled();
   });
 
   it("rejects reservation creation in the past using UTC", async () => {
@@ -130,12 +126,10 @@ describe("ReservationsService", () => {
         partySize: 2,
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(reservationsRepository.runSerializableTransaction).not.toHaveBeenCalled();
+    expect(reservationsRepository.createWithAvailabilityCheck).not.toHaveBeenCalled();
   });
 
   it("rejects reservation creation for a time outside generated slots", async () => {
-    transaction.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
-
     await expect(
       reservationsService.create(1, {
         restaurantId: 1,
@@ -144,12 +138,9 @@ describe("ReservationsService", () => {
         partySize: 2,
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(transaction.createReservation).not.toHaveBeenCalled();
   });
 
   it("rejects creation when seeded booked slots leave insufficient seats", async () => {
-    transaction.findRestaurantAvailabilityData.mockResolvedValue(createRestaurantRecord());
-
     await expect(
       reservationsService.create(1, {
         restaurantId: 1,

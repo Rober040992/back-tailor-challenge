@@ -37,42 +37,38 @@ export class ReservationsService {
     this.validateNotInPast(createReservationDto.date, createReservationDto.time);
 
     try {
-      return await this.reservationsRepository.runSerializableTransaction(async transaction => {
-        const restaurant = await transaction.findRestaurantAvailabilityData(
-          createReservationDto.restaurantId,
-          createReservationDto.date,
-        );
-
-        if (!restaurant) {
-          throw new NotFoundException(RESTAURANT_NOT_FOUND_MESSAGE);
-        }
-
-        const availability = this.availabilityCalculator.calculate(
-          restaurant,
-          createReservationDto.date,
-          createReservationDto.partySize,
-        );
-        const selectedSlot = availability.slots.find(
-          slot => slot.time === createReservationDto.time,
-        );
-
-        if (!selectedSlot) {
-          throw new BadRequestException(INVALID_TIME_SLOT_MESSAGE);
-        }
-
-        if (!selectedSlot.available) {
-          throw new ConflictException(CAPACITY_CONFLICT_MESSAGE);
-        }
-
-        return transaction.createReservation({
+      return await this.reservationsRepository.createWithAvailabilityCheck(
+        {
           userId,
           restaurantId: createReservationDto.restaurantId,
           date: createReservationDto.date,
           time: createReservationDto.time,
           partySize: createReservationDto.partySize,
           status: "confirmed",
-        });
-      });
+        },
+        restaurant => {
+          if (!restaurant) {
+            throw new NotFoundException(RESTAURANT_NOT_FOUND_MESSAGE);
+          }
+
+          const availability = this.availabilityCalculator.calculate(
+            restaurant,
+            createReservationDto.date,
+            createReservationDto.partySize,
+          );
+          const selectedSlot = availability.slots.find(
+            slot => slot.time === createReservationDto.time,
+          );
+
+          if (!selectedSlot) {
+            throw new BadRequestException(INVALID_TIME_SLOT_MESSAGE);
+          }
+
+          if (!selectedSlot.available) {
+            throw new ConflictException(CAPACITY_CONFLICT_MESSAGE);
+          }
+        },
+      );
     } catch (error) {
       if (error instanceof ReservationTransactionConflictError) {
         throw new ConflictException(CAPACITY_CONFLICT_MESSAGE);
