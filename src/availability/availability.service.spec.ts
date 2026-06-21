@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { NotFoundException } from "@nestjs/common";
+import { AvailabilityCalculator } from "./availability.calculator";
 import { AvailabilityRepository, AvailabilityRestaurantRecord } from "./availability.repository";
 import { AvailabilityService } from "./availability.service";
 
@@ -41,6 +42,7 @@ describe("AvailabilityService", () => {
     };
     availabilityService = new AvailabilityService(
       availabilityRepository as unknown as AvailabilityRepository,
+      new AvailabilityCalculator(),
     );
   });
 

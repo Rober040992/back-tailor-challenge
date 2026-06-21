@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { BadRequestException, ConflictException } from "@nestjs/common";
 import { Reservation } from "@prisma/client";
+import { AvailabilityCalculator } from "../availability/availability.calculator";
 import {
-  AvailabilityRepository,
   AvailabilityRestaurantRecord,
 } from "../availability/availability.repository";
-import { AvailabilityService } from "../availability/availability.service";
 import { ReservationsRepository, ReservationTransaction } from "./reservations.repository";
 import { ReservationsService } from "./reservations.service";
 
@@ -77,7 +76,7 @@ describe("ReservationsService", () => {
     };
     reservationsService = new ReservationsService(
       reservationsRepository as unknown as ReservationsRepository,
-      new AvailabilityService({} as AvailabilityRepository),
+      new AvailabilityCalculator(),
     );
   });
 

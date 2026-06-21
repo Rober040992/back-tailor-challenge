@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Reservation } from "@prisma/client";
-import { AvailabilityService } from "../availability/availability.service";
+import { AvailabilityCalculator } from "../availability/availability.calculator";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
 import {
   ReservationsRepository,
@@ -27,7 +27,7 @@ export type ReservationResponse = Reservation;
 export class ReservationsService {
   constructor(
     private readonly reservationsRepository: ReservationsRepository,
-    private readonly availabilityService: AvailabilityService,
+    private readonly availabilityCalculator: AvailabilityCalculator,
   ) {}
 
   async create(
@@ -47,7 +47,7 @@ export class ReservationsService {
           throw new NotFoundException(RESTAURANT_NOT_FOUND_MESSAGE);
         }
 
-        const availability = this.availabilityService.calculateAvailability(
+        const availability = this.availabilityCalculator.calculate(
           restaurant,
           createReservationDto.date,
           createReservationDto.partySize,
