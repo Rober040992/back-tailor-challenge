@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { BadRequestException, ConflictException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Logger } from "@nestjs/common";
 import { Reservation } from "@prisma/client";
 import { AvailabilityCalculator } from "../availability/availability.calculator";
 import { AvailabilityRestaurantRecord } from "../availability/availability.repository";
@@ -50,8 +50,12 @@ describe("ReservationsService", () => {
   };
   let restaurant: AvailabilityRestaurantRecord | null;
   let createdReservation: Reservation;
+  let logSpy: jest.SpiedFunction<Logger["log"]>;
+  let warnSpy: jest.SpiedFunction<Logger["warn"]>;
 
   beforeEach(() => {
+    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+    warnSpy = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     jest.useFakeTimers();
     jest.setSystemTime(new Date("2026-06-20T10:00:00.000Z"));
 
@@ -59,12 +63,12 @@ describe("ReservationsService", () => {
     createdReservation = createReservation();
     reservationsRepository = {
       createWithAvailabilityCheck: jest.fn(
-        async (
+        (
           _data: unknown,
           checkAvailability: (value: AvailabilityRestaurantRecord | null) => void,
         ) => {
           checkAvailability(restaurant);
-          return createdReservation;
+          return Promise.resolve(createdReservation);
         },
       ),
       findByUserId: jest.fn(),
@@ -100,6 +104,9 @@ describe("ReservationsService", () => {
       }),
       expect.any(Function),
     );
+    expect(logSpy).toHaveBeenCalledWith(
+      "[RESERVATION] created reservationId=1 restaurantId=1 userId=1 date=2026-07-10 time=13:30 partySize=2",
+    );
   });
 
   it("rejects overbooking with conflict", async () => {
@@ -115,6 +122,9 @@ describe("ReservationsService", () => {
         partySize: 2,
       }),
     ).rejects.toBeInstanceOf(ConflictException);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[RESERVATION] capacity conflict restaurantId=1 date=2026-07-10 time=13:30 partySize=2 availableSeats=1 userId=1",
+    );
   });
 
   it("rejects reservation creation in the past using UTC", async () => {
@@ -182,6 +192,9 @@ describe("ReservationsService", () => {
     expect(reservationsRepository.cancelConfirmed).toHaveBeenCalledWith(
       1,
       new Date("2026-06-20T10:00:00.000Z"),
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      "[RESERVATION] cancelled reservationId=1 restaurantId=1 userId=1",
     );
   });
 

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { ConflictException, NotFoundException } from "@nestjs/common";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { ConflictException, Logger, NotFoundException } from "@nestjs/common";
 import { RestaurantRecord, RestaurantsRepository } from "./restaurants.repository";
 import { RestaurantsService } from "./restaurants.service";
 
@@ -38,8 +38,10 @@ describe("RestaurantsService", () => {
     hasRelations: jest.MockedFunction<RestaurantsRepository["hasRelations"]>;
     delete: jest.MockedFunction<RestaurantsRepository["delete"]>;
   };
+  let logSpy: jest.SpiedFunction<Logger["log"]>;
 
   beforeEach(() => {
+    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
     restaurantsRepository = {
       findAll: jest.fn(),
       findById: jest.fn(),
@@ -51,6 +53,10 @@ describe("RestaurantsService", () => {
     restaurantsService = new RestaurantsService(
       restaurantsRepository as unknown as RestaurantsRepository,
     );
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("calculates the average rating and comments count", async () => {
@@ -90,8 +96,21 @@ describe("RestaurantsService", () => {
     restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord());
     restaurantsRepository.hasRelations.mockResolvedValue(true);
 
-    await expect(restaurantsService.delete(1)).rejects.toBeInstanceOf(ConflictException);
+    await expect(restaurantsService.delete(1, 1)).rejects.toBeInstanceOf(ConflictException);
     expect(restaurantsRepository.delete).not.toHaveBeenCalled();
+  });
+
+  it("logs successful restaurant creation and update", async () => {
+    const restaurant = createRestaurantRecord();
+    restaurantsRepository.create.mockResolvedValue(restaurant);
+    restaurantsRepository.findById.mockResolvedValue(restaurant);
+    restaurantsRepository.update.mockResolvedValue(restaurant);
+
+    await restaurantsService.create(7, {} as never);
+    await restaurantsService.update(7, restaurant.id, {});
+
+    expect(logSpy).toHaveBeenCalledWith("[RESTAURANT] created restaurantId=1 userId=7");
+    expect(logSpy).toHaveBeenCalledWith("[RESTAURANT] updated restaurantId=1 userId=7");
   });
 
   it("deletes a restaurant without related records", async () => {
@@ -99,8 +118,9 @@ describe("RestaurantsService", () => {
     restaurantsRepository.hasRelations.mockResolvedValue(false);
     restaurantsRepository.delete.mockResolvedValue(true);
 
-    await expect(restaurantsService.delete(1)).resolves.toBeUndefined();
+    await expect(restaurantsService.delete(7, 1)).resolves.toBeUndefined();
     expect(restaurantsRepository.delete).toHaveBeenCalledWith(1);
+    expect(logSpy).toHaveBeenCalledWith("[RESTAURANT] deleted restaurantId=1 userId=7");
   });
 
   it("maps a foreign key conflict during deletion to conflict", async () => {
@@ -108,6 +128,6 @@ describe("RestaurantsService", () => {
     restaurantsRepository.hasRelations.mockResolvedValue(false);
     restaurantsRepository.delete.mockResolvedValue(false);
 
-    await expect(restaurantsService.delete(1)).rejects.toBeInstanceOf(ConflictException);
+    await expect(restaurantsService.delete(1, 1)).rejects.toBeInstanceOf(ConflictException);
   });
 });

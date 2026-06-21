@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { NotFoundException } from "@nestjs/common";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { Logger, NotFoundException } from "@nestjs/common";
 import { AvailabilityCalculator } from "./availability.calculator";
 import { AvailabilityRepository, AvailabilityRestaurantRecord } from "./availability.repository";
 import { AvailabilityService } from "./availability.service";
@@ -35,8 +35,10 @@ describe("AvailabilityService", () => {
       AvailabilityRepository["findRestaurantAvailabilityData"]
     >;
   };
+  let logSpy: jest.SpiedFunction<Logger["log"]>;
 
   beforeEach(() => {
+    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
     availabilityRepository = {
       findRestaurantAvailabilityData: jest.fn(),
     };
@@ -44,6 +46,10 @@ describe("AvailabilityService", () => {
       availabilityRepository as unknown as AvailabilityRepository,
       new AvailabilityCalculator(),
     );
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("generates lunch and dinner slots and excludes service window end times", async () => {
@@ -59,6 +65,9 @@ describe("AvailabilityService", () => {
         expect.objectContaining({ time: "14:00" }),
         expect.objectContaining({ time: "21:00" }),
       ]),
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      "[AVAILABILITY] checked restaurantId=1 date=2026-07-12 partySize=4",
     );
   });
 

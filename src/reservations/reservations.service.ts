@@ -3,10 +3,12 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { Reservation } from "@prisma/client";
 import { AvailabilityCalculator } from "../availability/availability.calculator";
+import { logSafely } from "../common/logging/safe-logger";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
 import {
   ReservationsRepository,
@@ -25,6 +27,8 @@ export type ReservationResponse = Reservation;
 
 @Injectable()
 export class ReservationsService {
+  private readonly logger = new Logger(ReservationsService.name);
+
   constructor(
     private readonly reservationsRepository: ReservationsRepository,
     private readonly availabilityCalculator: AvailabilityCalculator,
@@ -37,7 +41,7 @@ export class ReservationsService {
     this.validateNotInPast(createReservationDto.date, createReservationDto.time);
 
     try {
-      return await this.reservationsRepository.createWithAvailabilityCheck(
+      const reservation = await this.reservationsRepository.createWithAvailabilityCheck(
         {
           userId,
           restaurantId: createReservationDto.restaurantId,
@@ -65,12 +69,22 @@ export class ReservationsService {
           }
 
           if (!selectedSlot.available) {
+            this.logCapacityConflict(userId, createReservationDto, selectedSlot.availableSeats);
             throw new ConflictException(CAPACITY_CONFLICT_MESSAGE);
           }
         },
       );
+
+      logSafely(
+        this.logger,
+        "log",
+        `[RESERVATION] created reservationId=${reservation.id} restaurantId=${reservation.restaurantId} userId=${userId} date=${reservation.date} time=${reservation.time} partySize=${reservation.partySize}`,
+      );
+
+      return reservation;
     } catch (error) {
       if (error instanceof ReservationTransactionConflictError) {
+        this.logCapacityConflict(userId, createReservationDto);
         throw new ConflictException(CAPACITY_CONFLICT_MESSAGE);
       }
 
@@ -102,7 +116,25 @@ export class ReservationsService {
       throw new ConflictException(ALREADY_CANCELLED_MESSAGE);
     }
 
+    logSafely(
+      this.logger,
+      "log",
+      `[RESERVATION] cancelled reservationId=${cancelledReservation.id} restaurantId=${cancelledReservation.restaurantId} userId=${userId}`,
+    );
+
     return cancelledReservation;
+  }
+
+  private logCapacityConflict(
+    userId: number,
+    reservation: CreateReservationDto,
+    availableSeats?: number,
+  ): void {
+    logSafely(
+      this.logger,
+      "warn",
+      `[RESERVATION] capacity conflict restaurantId=${reservation.restaurantId} date=${reservation.date} time=${reservation.time} partySize=${reservation.partySize}${availableSeats === undefined ? "" : ` availableSeats=${availableSeats}`} userId=${userId}`,
+    );
   }
 
   private async findOwnedReservation(userId: number, reservationId: number): Promise<Reservation> {

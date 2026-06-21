@@ -1,5 +1,17 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards } from "@nestjs/common";
-import type { Response } from "express";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
+import type { Request, Response } from "express";
+import { logSafely } from "../common/logging/safe-logger";
+import type { PublicUser } from "./auth.repository";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { JwtAuthGuard } from "./jwt/jwt-auth.guard";
@@ -13,8 +25,14 @@ const ACCESS_TOKEN_COOKIE_OPTIONS = {
   secure: false,
 };
 
+interface AuthenticatedRequest extends Request {
+  user: PublicUser;
+}
+
 @Controller("auth")
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Post("login")
@@ -33,11 +51,15 @@ export class AuthController {
   @Post("logout")
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  logout(@Res({ passthrough: true }) response: Response): void {
+  logout(
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ): void {
     response.clearCookie(ACCESS_TOKEN_COOKIE, {
       httpOnly: true,
       sameSite: "lax",
       secure: false,
     });
+    logSafely(this.logger, "log", `[AUTH] logout userId=${request.user.id}`);
   }
 }

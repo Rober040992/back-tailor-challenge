@@ -26,18 +26,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : undefined;
     const normalizedResponse = this.normalizeResponse(exceptionResponse);
+    const publicMessage =
+      statusCode === 500 ? "Internal server error." : normalizedResponse.message;
 
-    if (!(exception instanceof HttpException)) {
-      this.logger.error(
-        "Unexpected request error.",
-        exception instanceof Error ? exception.stack : undefined,
-      );
-    }
+    this.logError(request, statusCode, publicMessage, exception);
 
     response.status(statusCode).json({
       statusCode,
       error: HttpStatus[statusCode] ?? "INTERNAL_SERVER_ERROR",
-      message: statusCode === 500 ? "Internal server error." : normalizedResponse.message,
+      message: publicMessage,
       path: request.originalUrl,
       timestamp: new Date().toISOString(),
       ...(normalizedResponse.details !== undefined ? { details: normalizedResponse.details } : {}),
@@ -64,6 +61,26 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     return { message: "Request failed." };
+  }
+
+  private logError(
+    request: Request,
+    statusCode: number,
+    message: string,
+    exception: unknown,
+  ): void {
+    try {
+      const logMessage = `[ERROR] ${request.method ?? "UNKNOWN"} ${request.originalUrl ?? request.url ?? "/"} ${statusCode} ${message}`;
+
+      if (statusCode >= 500) {
+        this.logger.error(logMessage, exception instanceof Error ? exception.stack : undefined);
+        return;
+      }
+
+      this.logger.warn(logMessage);
+    } catch {
+      // Logging must never change the API error flow.
+    }
   }
 
   private isExceptionResponse(value: unknown): value is ExceptionResponse {

@@ -1,5 +1,6 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
+import { logSafely } from "../common/logging/safe-logger";
 import { CreateRestaurantDto } from "./dto/create-restaurant.dto";
 import { UpdateRestaurantDto } from "./dto/update-restaurant.dto";
 import { RestaurantRecord, RestaurantsRepository } from "./restaurants.repository";
@@ -29,6 +30,8 @@ export interface RestaurantResponse {
 
 @Injectable()
 export class RestaurantsService {
+  private readonly logger = new Logger(RestaurantsService.name);
+
   constructor(private readonly restaurantsRepository: RestaurantsRepository) {}
 
   async findAll(): Promise<RestaurantResponse[]> {
@@ -43,21 +46,40 @@ export class RestaurantsService {
     return this.toResponse(restaurant);
   }
 
-  async create(createRestaurantDto: CreateRestaurantDto): Promise<RestaurantResponse> {
+  async create(
+    userId: number,
+    createRestaurantDto: CreateRestaurantDto,
+  ): Promise<RestaurantResponse> {
     const restaurant = await this.restaurantsRepository.create(createRestaurantDto);
+
+    logSafely(
+      this.logger,
+      "log",
+      `[RESTAURANT] created restaurantId=${restaurant.id} userId=${userId}`,
+    );
 
     return this.toResponse(restaurant);
   }
 
-  async update(id: number, updateRestaurantDto: UpdateRestaurantDto): Promise<RestaurantResponse> {
+  async update(
+    userId: number,
+    id: number,
+    updateRestaurantDto: UpdateRestaurantDto,
+  ): Promise<RestaurantResponse> {
     await this.findExisting(id);
 
     const restaurant = await this.restaurantsRepository.update(id, updateRestaurantDto);
 
+    logSafely(
+      this.logger,
+      "log",
+      `[RESTAURANT] updated restaurantId=${restaurant.id} userId=${userId}`,
+    );
+
     return this.toResponse(restaurant);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(userId: number, id: number): Promise<void> {
     await this.findExisting(id);
 
     if (await this.restaurantsRepository.hasRelations(id)) {
@@ -69,6 +91,8 @@ export class RestaurantsService {
     if (!isDeleted) {
       throw new ConflictException(RESTAURANT_HAS_RELATIONS_MESSAGE);
     }
+
+    logSafely(this.logger, "log", `[RESTAURANT] deleted restaurantId=${id} userId=${userId}`);
   }
 
   private async findExisting(id: number): Promise<RestaurantRecord> {

@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { hash } from "bcrypt";
 import { AuthRepository, type AuthUser } from "./auth.repository";
@@ -12,8 +13,12 @@ describe("AuthService", () => {
   let jwtService: {
     signAsync: jest.MockedFunction<(payload: { sub: number; username: string }) => Promise<string>>;
   };
+  let logSpy: jest.SpiedFunction<Logger["log"]>;
+  let warnSpy: jest.SpiedFunction<Logger["warn"]>;
 
   beforeEach(() => {
+    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+    warnSpy = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     authRepository = {
       findByUsername: jest.fn(),
     };
@@ -24,6 +29,10 @@ describe("AuthService", () => {
       authRepository as unknown as AuthRepository,
       jwtService as unknown as JwtService,
     );
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("returns a public user and signs the expected JWT payload", async () => {
@@ -50,6 +59,7 @@ describe("AuthService", () => {
       sub: 1,
       username: "roberto",
     });
+    expect(logSpy).toHaveBeenCalledWith("[AUTH] login success userId=1 username=roberto");
   });
 
   it("returns the same unauthorized error for an unknown username", async () => {
@@ -64,6 +74,7 @@ describe("AuthService", () => {
       status: 401,
       message: "Invalid username or password.",
     });
+    expect(warnSpy).toHaveBeenCalledWith("[AUTH] login failed username=unknown");
   });
 
   it("returns the same unauthorized error for an invalid password", async () => {
@@ -82,5 +93,6 @@ describe("AuthService", () => {
       status: 401,
       message: "Invalid username or password.",
     });
+    expect(warnSpy).toHaveBeenCalledWith("[AUTH] login failed username=roberto");
   });
 });

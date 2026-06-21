@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { logSafely } from "../common/logging/safe-logger";
 import { AvailabilityCalculator } from "./availability.calculator";
 import { AvailabilityRepository } from "./availability.repository";
 import { AvailabilityResponse } from "./availability.types";
@@ -7,6 +8,8 @@ const RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found.";
 
 @Injectable()
 export class AvailabilityService {
+  private readonly logger = new Logger(AvailabilityService.name);
+
   constructor(
     private readonly availabilityRepository: AvailabilityRepository,
     private readonly availabilityCalculator: AvailabilityCalculator,
@@ -26,6 +29,14 @@ export class AvailabilityService {
       throw new NotFoundException(RESTAURANT_NOT_FOUND_MESSAGE);
     }
 
-    return this.availabilityCalculator.calculate(restaurant, date, partySize);
+    const availability = this.availabilityCalculator.calculate(restaurant, date, partySize);
+
+    logSafely(
+      this.logger,
+      "log",
+      `[AVAILABILITY] checked restaurantId=${restaurantId} date=${date} partySize=${partySize}`,
+    );
+
+    return availability;
   }
 }

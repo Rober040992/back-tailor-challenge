@@ -72,6 +72,12 @@ Responsibilities:
 * Repositories contain Prisma queries.
 * PrismaService owns database access.
 
+## Logging
+
+Logging must never change application behavior or break request handling.
+
+Logs must not include sensitive data.
+
 Rules:
 
 * Controllers must not contain business logic.
