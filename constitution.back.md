@@ -179,6 +179,7 @@ Favourite.restaurantId: Int
 User fields:
 
 ```txt
+email: String
 username: String
 passwordHash: String
 createdAt: DateTime
@@ -258,6 +259,8 @@ Required relationships:
 
 Constraints:
 
+* `User.email` must be unique.
+* `User.username` must be unique.
 * `Favourite` must be unique on `userId + restaurantId`.
 * `Reservation` must not be unique on `restaurantId + date + time`.
 
@@ -275,9 +278,19 @@ Protected endpoints must read the authenticated user from the JWT.
 
 Logout clears the authentication cookie.
 
-Registration is out of scope.
+User registration is allowed for the frontend auth flow.
+
+Registration creates a user with `email`, `username` and `password`.
+
+Registration must not generate a JWT.
+
+Registration must not set the authentication cookie.
+
+JWT must still be generated only after successful login.
 
 The project uses 4 predefined seed users.
+
+Each predefined seed user must include an `email`.
 
 Sample credentials must be documented in the README.
 
@@ -307,6 +320,7 @@ Use these endpoints unless a future spec changes them.
 
 ```txt
 auth:
+POST   /auth/register
 POST   /auth/login
 POST   /auth/logout
 
@@ -341,6 +355,7 @@ PATCH  /reservations/:reservationId/cancel
 Public routes:
 
 ```txt
+POST /auth/register
 POST /auth/login
 GET  /restaurants
 GET  /restaurants/:id
@@ -415,9 +430,27 @@ Status codes:
 500 Internal Server Error
 ```
 
-Use `409 Conflict` for overbooking, duplicate favourites and invalid state conflicts.
+Use `409 Conflict` for overbooking, duplicate favourites, duplicate email, duplicate username and invalid state conflicts.
 
 ## Business rules
+
+### Auth
+
+Users can register with `email`, `username` and `password`.
+
+`email` must be valid and unique.
+
+`username` must be unique.
+
+`password` must be hashed before saving the user.
+
+Registration must return `201 Created` when the user is created.
+
+Registration must return `409 Conflict` when the email or username already exists.
+
+Registration responses must never include `passwordHash`.
+
+Registration does not authenticate the user automatically.
 
 ### Restaurants
 
@@ -528,7 +561,6 @@ Capacity conflicts return `409 Conflict`.
 
 ## Out of scope
 
-* User registration
 * Payments
 * Admin roles
 * Multi-tenant support
