@@ -1,9 +1,11 @@
 import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
+import { compare } from "bcrypt";
 import request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "../src/app.module";
 import { configureApplication } from "../src/app.setup";
+import { PrismaService } from "../src/prisma/prisma.service";
 
 interface ErrorResponseBody {
   statusCode: number;
@@ -18,6 +20,9 @@ interface ErrorResponseBody {
 
 describe("Authentication (e2e)", () => {
   let app: INestApplication<App>;
+  let prisma: PrismaService;
+  const registrationRunId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const registrationEmails = new Set<string>();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -27,6 +32,121 @@ describe("Authentication (e2e)", () => {
     app = moduleFixture.createNestApplication();
     configureApplication(app);
     await app.init();
+    prisma = app.get(PrismaService);
+  });
+
+  it("registers a user without returning the password hash or setting a cookie", async () => {
+    const email = `registration-${registrationRunId}@example.com`;
+    const username = `registration-${registrationRunId}`;
+    registrationEmails.add(email);
+
+    const response = await request(app.getHttpServer())
+      .post("/auth/register")
+      .send({
+        email,
+        username,
+        password: "Password123",
+      })
+      .expect(201);
+    const storedUser = await prisma.user.findUniqueOrThrow({
+      where: { email },
+    });
+
+    expect(response.body).toEqual({
+      id: storedUser.id,
+      email,
+      username,
+      createdAt: storedUser.createdAt.toISOString(),
+      updatedAt: storedUser.updatedAt.toISOString(),
+    });
+    expect(response.body).not.toHaveProperty("passwordHash");
+    expect(response.headers["set-cookie"]).toBeUndefined();
+    expect(storedUser.passwordHash).not.toBe("Password123");
+    await expect(compare("Password123", storedUser.passwordHash)).resolves.toBe(true);
+  });
+
+  it("returns the shared validation error for missing registration fields", async () => {
+    const response = await request(app.getHttpServer()).post("/auth/register").send({}).expect(400);
+    const responseBody = response.body as ErrorResponseBody;
+
+    expect(responseBody).toMatchObject({
+      statusCode: 400,
+      error: "BAD_REQUEST",
+      message: "Validation failed.",
+      path: "/auth/register",
+    });
+    expect(responseBody.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ field: "email" }),
+        expect.objectContaining({ field: "username" }),
+        expect.objectContaining({ field: "password" }),
+      ]),
+    );
+  });
+
+  it("returns bad request for an invalid registration email", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/auth/register")
+      .send({
+        email: "not-an-email",
+        username: `invalid-email-${registrationRunId}`,
+        password: "Password123",
+      })
+      .expect(400);
+    const responseBody = response.body as ErrorResponseBody;
+
+    expect(responseBody.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "email" })]),
+    );
+  });
+
+  it("returns conflict when the registration email already exists", async () => {
+    const email = `duplicate-email-${registrationRunId}@example.com`;
+    registrationEmails.add(email);
+
+    await request(app.getHttpServer())
+      .post("/auth/register")
+      .send({
+        email,
+        username: `duplicate-email-first-${registrationRunId}`,
+        password: "Password123",
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post("/auth/register")
+      .send({
+        email,
+        username: `duplicate-email-second-${registrationRunId}`,
+        password: "Password123",
+      })
+      .expect(409);
+  });
+
+  it("returns conflict when the registration username already exists", async () => {
+    const firstEmail = `duplicate-username-first-${registrationRunId}@example.com`;
+    const secondEmail = `duplicate-username-second-${registrationRunId}@example.com`;
+    const username = `duplicate-username-${registrationRunId}`;
+    registrationEmails.add(firstEmail);
+    registrationEmails.add(secondEmail);
+
+    await request(app.getHttpServer())
+      .post("/auth/register")
+      .send({
+        email: firstEmail,
+        username,
+        password: "Password123",
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post("/auth/register")
+      .send({
+        email: secondEmail,
+        username,
+        password: "Password123",
+      })
+      .expect(409);
   });
 
   it("logs in a seeded user and sets the authentication cookie", async () => {
@@ -116,6 +236,13 @@ describe("Authentication (e2e)", () => {
   });
 
   afterAll(async () => {
+    await prisma.user.deleteMany({
+      where: {
+        email: {
+          in: [...registrationEmails],
+        },
+      },
+    });
     await app.close();
   });
 });

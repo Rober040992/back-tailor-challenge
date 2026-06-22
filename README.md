@@ -13,7 +13,7 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 
 | Feature          | Status      | Current state                                                                                                               |
 | ---------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Authentication   | Implemented | Login, JWT cookie authentication, protected routes, and logout                                                              |
+| Authentication   | Implemented | Registration, login, JWT cookie authentication, protected routes, and logout                                                |
 | Restaurants CRUD | Implemented | Public reads and authenticated create, update, and delete                                                                   |
 | Availability     | Implemented | Public, on-demand slot calculation using settings, booked slots, and confirmed reservations                                 |
 | Reservations     | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement                         |
@@ -201,7 +201,7 @@ The e2e tests use the configured PostgreSQL database and expect the seed users a
 
 ## Authentication and sample credentials
 
-Authentication uses a JWT stored in the `access_token` HttpOnly cookie. Tokens expire after 24 hours, are not stored in the database, and are cleared on logout. Registration is out of scope.
+Authentication uses a JWT stored in the `access_token` HttpOnly cookie. Tokens expire after 24 hours, are not stored in the database, and are cleared on logout. Registration creates a user account without creating a JWT or authentication cookie.
 
 > [!CAUTION]
 > The local cookie uses `SameSite=Lax` and `Secure=false`. This configuration is intended for local HTTP development and must not be used unchanged in production.
@@ -209,10 +209,10 @@ Authentication uses a JWT stored in the `access_token` HttpOnly cookie. Tokens e
 The seed creates four users with password `12345`:
 
 ```txt
-roberto
-lautaro
-nico
-aida
+roberto@example.com / roberto
+lautaro@example.com / lautaro
+nico@example.com / nico
+aida@example.com / aida
 ```
 
 Passwords are hashed with `bcrypt`. See the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md) for login, logout, endpoint access, request bodies, and responses.
@@ -271,7 +271,7 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 - Local development uses PostgreSQL.
 - Database changes use Prisma migrations, and initial data uses a reproducible Prisma seed.
 - Authentication uses a JWT in an HttpOnly cookie instead of database token storage.
-- Registration is intentionally out of scope; local testing uses four predefined users.
+- Registration is public and does not authenticate the newly created user automatically.
 - The application uses a direct controller/service/repository structure without additional architectural layers.
 - Reservation creation uses a repository-managed serializable transaction while availability rules remain in the service layer.
 - Availability and Reservations share slot calculation without coupling their services.
@@ -283,7 +283,7 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 
 AI/Codex was used as an implementation assistant for specifications, prompts, planning, documentation, and implementation support. The developer reviewed the resulting code, API contracts, errors, and business rules.
 
-Generated output was checked against `constitution.back.md`, the active specifications, and the repository source. Invented endpoints, unrelated refactors, overengineering, registration, payments, admin roles, and premature Docker or Swagger work were rejected or avoided.
+Generated output was checked against `constitution.back.md`, the active specifications, and the repository source. Invented endpoints, unrelated refactors, overengineering, payments, admin roles, and premature Docker or Swagger work were rejected or avoided.
 
 ## Current limitations
 

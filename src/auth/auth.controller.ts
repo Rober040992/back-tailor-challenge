@@ -12,6 +12,8 @@ import {
 import {
   ApiBadRequestResponse,
   ApiCookieAuth,
+  ApiConflictResponse,
+  ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -24,6 +26,8 @@ import type { PublicUser } from "./auth.repository";
 import { AuthService } from "./auth.service";
 import { AuthUserResponseDto } from "./dto/auth-user-response.dto";
 import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
+import { RegisteredUserResponseDto } from "./dto/registered-user-response.dto";
 import { JwtAuthGuard } from "./jwt/jwt-auth.guard";
 
 const ACCESS_TOKEN_COOKIE = "access_token";
@@ -45,6 +49,18 @@ export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
   constructor(private readonly authService: AuthService) {}
+
+  @Post("register")
+  @ApiOperation({ summary: "Create a user account" })
+  @ApiCreatedResponse({
+    description: "The user account was created.",
+    type: RegisteredUserResponseDto,
+  })
+  @ApiBadRequestResponse({ description: "The request body failed validation." })
+  @ApiConflictResponse({ description: "The email or username already exists." })
+  register(@Body() registerDto: RegisterDto): Promise<RegisteredUserResponseDto> {
+    return this.authService.register(registerDto);
+  }
 
   @Post("login")
   @HttpCode(HttpStatus.OK)

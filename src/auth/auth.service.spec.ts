@@ -1,14 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { Logger } from "@nestjs/common";
+import { ConflictException, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { hash } from "bcrypt";
-import { AuthRepository, type AuthUser } from "./auth.repository";
+import { compare, hash } from "bcrypt";
+import {
+  AuthRepository,
+  DuplicateRegistrationError,
+  type AuthUser,
+  type RegisteredUser,
+} from "./auth.repository";
 import { AuthService } from "./auth.service";
 
 describe("AuthService", () => {
   let authService: AuthService;
   let authRepository: {
     findByUsername: jest.MockedFunction<(username: string) => Promise<AuthUser | null>>;
+    create: jest.MockedFunction<
+      (email: string, username: string, passwordHash: string) => Promise<RegisteredUser>
+    >;
   };
   let jwtService: {
     signAsync: jest.MockedFunction<(payload: { sub: number; username: string }) => Promise<string>>;
@@ -21,6 +29,7 @@ describe("AuthService", () => {
     warnSpy = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     authRepository = {
       findByUsername: jest.fn(),
+      create: jest.fn(),
     };
     jwtService = {
       signAsync: jest.fn(),
@@ -33,6 +42,57 @@ describe("AuthService", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it("registers a user with a hashed password and without signing a JWT", async () => {
+    const createdAt = new Date("2026-06-22T10:00:00.000Z");
+    const updatedAt = new Date("2026-06-22T10:00:00.000Z");
+    authRepository.create.mockResolvedValue({
+      id: 5,
+      email: "user@example.com",
+      username: "new-user",
+      createdAt,
+      updatedAt,
+    });
+
+    await expect(
+      authService.register({
+        email: "user@example.com",
+        username: "new-user",
+        password: "Password123",
+      }),
+    ).resolves.toEqual({
+      id: 5,
+      email: "user@example.com",
+      username: "new-user",
+      createdAt,
+      updatedAt,
+    });
+
+    expect(authRepository.create).toHaveBeenCalledWith(
+      "user@example.com",
+      "new-user",
+      expect.any(String),
+    );
+    const storedPassword = authRepository.create.mock.calls[0][2];
+
+    expect(storedPassword).not.toBe("Password123");
+    await expect(compare("Password123", storedPassword)).resolves.toBe(true);
+    expect(jwtService.signAsync).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith("[AUTH] registration success userId=5 username=new-user");
+  });
+
+  it("returns conflict when the email or username already exists", async () => {
+    authRepository.create.mockRejectedValue(new DuplicateRegistrationError());
+
+    await expect(
+      authService.register({
+        email: "user@example.com",
+        username: "new-user",
+        password: "Password123",
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(jwtService.signAsync).not.toHaveBeenCalled();
   });
 
   it("returns a public user and signs the expected JWT payload", async () => {

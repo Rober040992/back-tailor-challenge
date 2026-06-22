@@ -9,7 +9,12 @@ process.loadEnvFile();
 const SEED_PASSWORD = "12345";
 const BCRYPT_SALT_ROUNDS = 10;
 const RESTAURANTS_FILE = resolve(process.cwd(), "prisma/seed-data/restaurants.json");
-const SEED_USERNAMES = ["roberto", "lautaro", "nico", "aida"] as const;
+const SEED_USERS = [
+  { email: "roberto@example.com", username: "roberto" },
+  { email: "lautaro@example.com", username: "lautaro" },
+  { email: "nico@example.com", username: "nico" },
+  { email: "aida@example.com", username: "aida" },
+] as const;
 
 interface SourceComment {
   name: string;
@@ -60,7 +65,11 @@ function requireNumber(record: Record<string, unknown>, field: string, context: 
   return value;
 }
 
-function requireJson(record: Record<string, unknown>, field: string, context: string): Prisma.InputJsonValue {
+function requireJson(
+  record: Record<string, unknown>,
+  field: string,
+  context: string,
+): Prisma.InputJsonValue {
   const value = record[field];
 
   if (!isRecord(value) && !Array.isArray(value)) {
@@ -119,7 +128,9 @@ function parseRestaurant(value: unknown, index: number): SourceRestaurant {
     capacity,
     reservationSettings: requireJson(value, "reservationSettings", context),
     operating_hours: requireJson(value, "operating_hours", context),
-    comments: value.comments.map((comment, commentIndex) => parseComment(comment, `${context}.comments[${commentIndex}]`)),
+    comments: value.comments.map((comment, commentIndex) =>
+      parseComment(comment, `${context}.comments[${commentIndex}]`),
+    ),
   };
 }
 
@@ -142,7 +153,9 @@ async function main(): Promise<void> {
   }
 
   const restaurants = await loadRestaurants();
-  const passwordHashes = await Promise.all(SEED_USERNAMES.map(() => hash(SEED_PASSWORD, BCRYPT_SALT_ROUNDS)));
+  const passwordHashes = await Promise.all(
+    SEED_USERS.map(() => hash(SEED_PASSWORD, BCRYPT_SALT_ROUNDS)),
+  );
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: databaseUrl }),
   });
@@ -162,10 +175,11 @@ async function main(): Promise<void> {
       await transaction.$executeRaw`ALTER SEQUENCE "User_id_seq" RESTART WITH 1`;
 
       const createdUsers = await Promise.all(
-        SEED_USERNAMES.map((username, index) =>
+        SEED_USERS.map((user, index) =>
           transaction.user.create({
             data: {
-              username,
+              email: user.email,
+              username: user.username,
               passwordHash: passwordHashes[index],
             },
           }),

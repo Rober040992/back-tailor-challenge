@@ -1,9 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { User } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 export type AuthUser = Pick<User, "id" | "username" | "passwordHash">;
 export type PublicUser = Pick<User, "id" | "username">;
+export type RegisteredUser = Pick<User, "id" | "email" | "username" | "createdAt" | "updatedAt">;
+
+export class DuplicateRegistrationError extends Error {}
 
 @Injectable()
 export class AuthRepository {
@@ -28,5 +31,30 @@ export class AuthRepository {
         username: true,
       },
     });
+  }
+
+  async create(email: string, username: string, passwordHash: string): Promise<RegisteredUser> {
+    try {
+      return await this.prisma.user.create({
+        data: {
+          email,
+          username,
+          passwordHash,
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new DuplicateRegistrationError();
+      }
+
+      throw error;
+    }
   }
 }
