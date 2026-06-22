@@ -6,8 +6,14 @@ import { httpLoggingMiddleware } from "./common/middleware/http-logging.middlewa
 import { configureSwagger } from "./common/swagger/swagger.setup";
 
 export function configureApplication(app: INestApplication): void {
+  app.enableCors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  });
+
   app.use(httpLoggingMiddleware);
   app.use(cookieParser());
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -16,6 +22,7 @@ export function configureApplication(app: INestApplication): void {
       exceptionFactory: createValidationException,
     }),
   );
+  
   app.useGlobalFilters(new HttpExceptionFilter());
   configureSwagger(app);
 }
