@@ -4,6 +4,7 @@ import { compare, hash } from "bcrypt";
 import { logSafely } from "../common/logging/safe-logger";
 import {
   AuthRepository,
+  CurrentUser,
   DuplicateRegistrationError,
   PublicUser,
   RegisteredUser,
@@ -12,6 +13,7 @@ import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 
 const INVALID_CREDENTIALS_MESSAGE = "Invalid username or password.";
+const AUTHENTICATION_REQUIRED_MESSAGE = "Authentication is required.";
 const DUPLICATE_REGISTRATION_MESSAGE = "Email or username already exists.";
 const BCRYPT_SALT_ROUNDS = 10;
 
@@ -89,5 +91,15 @@ export class AuthService {
       accessToken,
       user: publicUser,
     };
+  }
+
+  async getCurrentUser(userId: number): Promise<CurrentUser> {
+    const user = await this.authRepository.findCurrentById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException(AUTHENTICATION_REQUIRED_MESSAGE);
+    }
+
+    return user;
   }
 }

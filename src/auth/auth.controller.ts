@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Logger,
@@ -25,6 +26,7 @@ import { logSafely } from "../common/logging/safe-logger";
 import type { PublicUser } from "./auth.repository";
 import { AuthService } from "./auth.service";
 import { AuthUserResponseDto } from "./dto/auth-user-response.dto";
+import { CurrentUserResponseDto } from "./dto/current-user-response.dto";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { RegisteredUserResponseDto } from "./dto/registered-user-response.dto";
@@ -80,6 +82,19 @@ export class AuthController {
     response.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
 
     return result.user;
+  }
+
+  @Get("me")
+  @UseGuards(JwtAuthGuard)
+  @ApiCookieAuth(ACCESS_TOKEN_COOKIE)
+  @ApiOperation({ summary: "Get the current authenticated user" })
+  @ApiOkResponse({
+    description: "The current authenticated user was returned.",
+    type: CurrentUserResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: "Authentication is required." })
+  getCurrentUser(@Req() request: AuthenticatedRequest): Promise<CurrentUserResponseDto> {
+    return this.authService.getCurrentUser(request.user.id);
   }
 
   @Post("logout")

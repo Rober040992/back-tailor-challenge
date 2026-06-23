@@ -12,6 +12,7 @@ interface ErrorResponseBody {
   error: string;
   message: string;
   path: string;
+  timestamp: string;
   details?: Array<{
     field: string;
     message: string;
@@ -169,6 +170,58 @@ describe("Authentication (e2e)", () => {
     expect(accessTokenCookie).toContain("Max-Age=86400");
     expect(accessTokenCookie).toContain("SameSite=Lax");
     expect(accessTokenCookie).not.toContain("Secure");
+  });
+
+  it("returns the current authenticated user with a valid authentication cookie", async () => {
+    const loginResponse = await request(app.getHttpServer())
+      .post("/auth/login")
+      .send({
+        username: "roberto",
+        password: "12345",
+      })
+      .expect(200);
+    const cookies = loginResponse.headers["set-cookie"] as unknown as string[];
+
+    const response = await request(app.getHttpServer())
+      .get("/auth/me")
+      .set("Cookie", cookies)
+      .expect(200);
+
+    expect(response.body).toEqual({
+      id: 1,
+      email: "roberto@example.com",
+      username: "roberto",
+    });
+    expect(response.body).not.toHaveProperty("passwordHash");
+  });
+
+  it("rejects the current-user endpoint without an authentication cookie", async () => {
+    const response = await request(app.getHttpServer()).get("/auth/me").expect(401);
+    const responseBody = response.body as ErrorResponseBody;
+
+    expect(responseBody).toMatchObject({
+      statusCode: 401,
+      error: "UNAUTHORIZED",
+      message: "Unauthorized",
+      path: "/auth/me",
+    });
+    expect(responseBody.timestamp).toEqual(expect.any(String));
+  });
+
+  it("rejects the current-user endpoint with an invalid authentication cookie", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/auth/me")
+      .set("Cookie", "access_token=invalid-token")
+      .expect(401);
+    const responseBody = response.body as ErrorResponseBody;
+
+    expect(responseBody).toMatchObject({
+      statusCode: 401,
+      error: "UNAUTHORIZED",
+      message: "Unauthorized",
+      path: "/auth/me",
+    });
+    expect(responseBody.timestamp).toEqual(expect.any(String));
   });
 
   it("returns the shared validation error for missing credentials", async () => {

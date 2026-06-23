@@ -4,6 +4,7 @@ import { JwtService } from "@nestjs/jwt";
 import { compare, hash } from "bcrypt";
 import {
   AuthRepository,
+  type CurrentUser,
   DuplicateRegistrationError,
   type AuthUser,
   type RegisteredUser,
@@ -14,6 +15,7 @@ describe("AuthService", () => {
   let authService: AuthService;
   let authRepository: {
     findByUsername: jest.MockedFunction<(username: string) => Promise<AuthUser | null>>;
+    findCurrentById: jest.MockedFunction<(id: number) => Promise<CurrentUser | null>>;
     create: jest.MockedFunction<
       (email: string, username: string, passwordHash: string) => Promise<RegisteredUser>
     >;
@@ -29,6 +31,7 @@ describe("AuthService", () => {
     warnSpy = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
     authRepository = {
       findByUsername: jest.fn(),
+      findCurrentById: jest.fn(),
       create: jest.fn(),
     };
     jwtService = {
@@ -120,6 +123,30 @@ describe("AuthService", () => {
       username: "roberto",
     });
     expect(logSpy).toHaveBeenCalledWith("[AUTH] login success userId=1 username=roberto");
+  });
+
+  it("returns the safe current authenticated user projection", async () => {
+    authRepository.findCurrentById.mockResolvedValue({
+      id: 1,
+      email: "roberto@example.com",
+      username: "roberto",
+    });
+
+    await expect(authService.getCurrentUser(1)).resolves.toEqual({
+      id: 1,
+      email: "roberto@example.com",
+      username: "roberto",
+    });
+    expect(authRepository.findCurrentById).toHaveBeenCalledWith(1);
+  });
+
+  it("returns unauthorized when the current authenticated user no longer exists", async () => {
+    authRepository.findCurrentById.mockResolvedValue(null);
+
+    await expect(authService.getCurrentUser(1)).rejects.toMatchObject({
+      status: 401,
+      message: "Authentication is required.",
+    });
   });
 
   it("returns the same unauthorized error for an unknown username", async () => {
