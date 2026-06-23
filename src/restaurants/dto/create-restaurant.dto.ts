@@ -1,64 +1,65 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import type { Prisma } from "@prisma/client";
-import { IsDefined, IsInt, IsNumber, IsObject, IsString, Max, Min } from "class-validator";
+import { IsInt, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export class CreateRestaurantDto {
   @ApiProperty({ example: "The Example Table" })
   @IsString()
   name!: string;
 
-  @ApiProperty({ example: "Downtown" })
+  @ApiPropertyOptional({ example: "Downtown" })
+  @IsOptional()
   @IsString()
-  neighborhood!: string;
+  neighborhood?: string;
 
   @ApiProperty({ example: "123 Example Street" })
   @IsString()
   address!: string;
 
-  @ApiProperty({ example: 40.4168, minimum: -90, maximum: 90 })
+  @ApiPropertyOptional({ example: 40.4168 })
+  @IsOptional()
   @IsNumber()
-  @Min(-90)
-  @Max(90)
-  lat!: number;
+  lat?: number;
 
-  @ApiProperty({ example: -3.7038, minimum: -180, maximum: 180 })
+  @ApiPropertyOptional({ example: -3.7038 })
+  @IsOptional()
   @IsNumber()
-  @Min(-180)
-  @Max(180)
-  lng!: number;
+  lng?: number;
 
-  @ApiProperty({ example: "https://example.com/restaurant.jpg" })
+  @ApiPropertyOptional({ example: "https://example.com/restaurant.jpg" })
+  @IsOptional()
   @IsString()
-  image!: string;
+  image?: string;
 
-  @ApiProperty({ example: "https://example.com/restaurant-detail.jpg" })
+  @ApiPropertyOptional({ example: "https://example.com/restaurant-detail.jpg" })
+  @IsOptional()
   @IsString()
-  photograph!: string;
+  photograph?: string;
 
-  @ApiProperty({ example: "Mediterranean" })
+  @ApiPropertyOptional({ example: "Mediterranean" })
+  @IsOptional()
   @IsString()
-  cuisineType!: string;
+  cuisineType?: string;
 
   @ApiProperty({ example: "Seasonal Mediterranean cuisine." })
   @IsString()
   description!: string;
 
-  @ApiProperty({ example: 40, minimum: 1, maximum: 999 })
+  @ApiPropertyOptional({ example: 40 })
+  @IsOptional()
   @IsInt()
-  @Min(1)
-  @Max(999)
-  capacity!: number;
+  capacity?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Object,
     additionalProperties: true,
     example: { monday: { open: "12:00", close: "23:00" } },
   })
-  @IsDefined()
+  @IsOptional()
   @IsObject()
-  operatingHours!: Prisma.InputJsonValue;
+  operatingHours?: Prisma.InputJsonValue;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Object,
     additionalProperties: true,
     example: {
@@ -67,7 +68,7 @@ export class CreateRestaurantDto {
       bookedSlots: [],
     },
   })
-  @IsDefined()
+  @IsOptional()
   @IsObject()
-  reservationSettings!: Prisma.InputJsonValue;
+  reservationSettings?: Prisma.InputJsonValue;
 }

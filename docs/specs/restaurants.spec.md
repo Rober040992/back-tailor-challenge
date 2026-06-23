@@ -42,17 +42,36 @@ Requires:
 
 ```txt
 name
-neighborhood
 address
+description
+```
+
+Accepts optionally:
+
+```txt
+neighborhood
 lat
 lng
 image
 photograph
 cuisineType
-description
 capacity
 operatingHours
 reservationSettings
+```
+
+When optional fields are missing, the backend assigns:
+
+```txt
+neighborhood: ""
+lat: 0
+lng: 0
+image: ""
+photograph: image value when image is provided, otherwise ""
+cuisineType: ""
+capacity: 1
+operatingHours: {}
+reservationSettings: {}
 ```
 
 Returns `201 Created` with the created restaurant response.

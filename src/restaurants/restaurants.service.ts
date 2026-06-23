@@ -30,7 +30,21 @@ export class RestaurantsService {
     userId: number,
     createRestaurantDto: CreateRestaurantDto,
   ): Promise<RestaurantResponse> {
-    const restaurant = await this.restaurantsRepository.create(createRestaurantDto);
+    const image = createRestaurantDto.image ?? "";
+    const restaurant = await this.restaurantsRepository.create({
+      name: createRestaurantDto.name,
+      neighborhood: createRestaurantDto.neighborhood ?? "",
+      address: createRestaurantDto.address,
+      lat: createRestaurantDto.lat ?? 0,
+      lng: createRestaurantDto.lng ?? 0,
+      image,
+      photograph: createRestaurantDto.photograph ?? image,
+      cuisineType: createRestaurantDto.cuisineType ?? "",
+      description: createRestaurantDto.description,
+      capacity: createRestaurantDto.capacity ?? 1,
+      operatingHours: createRestaurantDto.operatingHours ?? {},
+      reservationSettings: createRestaurantDto.reservationSettings ?? {},
+    });
 
     logSafely(
       this.logger,

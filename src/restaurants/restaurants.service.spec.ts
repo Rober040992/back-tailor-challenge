@@ -93,6 +93,47 @@ describe("RestaurantsService", () => {
     await expect(restaurantsService.findOne(999)).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it("creates a restaurant with defaults for missing optional fields", async () => {
+    restaurantsRepository.create.mockResolvedValue(
+      createRestaurantRecord({
+        name: "Minimal Restaurant",
+        neighborhood: "",
+        address: "1 Minimal Street",
+        lat: 0,
+        lng: 0,
+        image: "image.jpg",
+        photograph: "image.jpg",
+        cuisineType: "",
+        description: "Minimal description.",
+        capacity: 1,
+        operatingHours: {},
+        reservationSettings: {},
+      }),
+    );
+
+    await restaurantsService.create(7, {
+      name: "Minimal Restaurant",
+      address: "1 Minimal Street",
+      description: "Minimal description.",
+      image: "image.jpg",
+    });
+
+    expect(restaurantsRepository.create).toHaveBeenCalledWith({
+      name: "Minimal Restaurant",
+      neighborhood: "",
+      address: "1 Minimal Street",
+      lat: 0,
+      lng: 0,
+      image: "image.jpg",
+      photograph: "image.jpg",
+      cuisineType: "",
+      description: "Minimal description.",
+      capacity: 1,
+      operatingHours: {},
+      reservationSettings: {},
+    });
+  });
+
   it("blocks deletion when the restaurant has related records", async () => {
     restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord());
     restaurantsRepository.hasRelations.mockResolvedValue(true);
@@ -107,7 +148,11 @@ describe("RestaurantsService", () => {
     restaurantsRepository.findById.mockResolvedValue(restaurant);
     restaurantsRepository.update.mockResolvedValue(restaurant);
 
-    await restaurantsService.create(7, {} as never);
+    await restaurantsService.create(7, {
+      name: restaurant.name,
+      address: restaurant.address,
+      description: restaurant.description,
+    });
     await restaurantsService.update(7, restaurant.id, {});
 
     expect(logSpy).toHaveBeenCalledWith("[RESTAURANT] created restaurantId=1 userId=7");

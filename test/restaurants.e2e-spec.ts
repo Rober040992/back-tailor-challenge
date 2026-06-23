@@ -27,6 +27,12 @@ const restaurantPayload = {
   },
 };
 
+const minimalRestaurantPayload = {
+  name: "Minimal CRUD Test Restaurant",
+  address: "101 Minimal Street",
+  description: "Restaurant created with the minimum CRUD payload.",
+};
+
 const restaurantResponseFields = [
   "address",
   "averageRating",
@@ -107,14 +113,23 @@ describe("Restaurants CRUD (e2e)", () => {
     const createResponse = await request(app.getHttpServer())
       .post("/restaurants")
       .set("Cookie", authenticationCookies)
-      .send(restaurantPayload)
+      .send(minimalRestaurantPayload)
       .expect(201);
     const createdRestaurant = createResponse.body as Record<string, unknown>;
     const restaurantId = createdRestaurant.id as number;
 
     expect(Object.keys(createdRestaurant).sort()).toEqual(restaurantResponseFields);
     expect(createdRestaurant).toMatchObject({
-      ...restaurantPayload,
+      ...minimalRestaurantPayload,
+      neighborhood: "",
+      lat: 0,
+      lng: 0,
+      image: "",
+      photograph: "",
+      cuisineType: "",
+      capacity: 1,
+      operatingHours: {},
+      reservationSettings: {},
       averageRating: null,
       commentsCount: 0,
     });
@@ -124,7 +139,7 @@ describe("Restaurants CRUD (e2e)", () => {
       .expect(200);
     expect(getResponse.body).toMatchObject({
       id: restaurantId,
-      name: restaurantPayload.name,
+      name: minimalRestaurantPayload.name,
     });
 
     const updateResponse = await request(app.getHttpServer())

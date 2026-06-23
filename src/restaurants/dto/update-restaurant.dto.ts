@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import type { Prisma } from "@prisma/client";
-import { IsInt, IsNumber, IsObject, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsInt, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export class UpdateRestaurantDto {
   @ApiPropertyOptional({ example: "The Updated Table" })
@@ -18,18 +18,14 @@ export class UpdateRestaurantDto {
   @IsString()
   address?: string;
 
-  @ApiPropertyOptional({ example: 40.4168, minimum: -90, maximum: 90 })
+  @ApiPropertyOptional({ example: 40.4168 })
   @IsOptional()
   @IsNumber()
-  @Min(-90)
-  @Max(90)
   lat?: number;
 
-  @ApiPropertyOptional({ example: -3.7038, minimum: -180, maximum: 180 })
+  @ApiPropertyOptional({ example: -3.7038 })
   @IsOptional()
   @IsNumber()
-  @Min(-180)
-  @Max(180)
   lng?: number;
 
   @ApiPropertyOptional({ example: "https://example.com/restaurant.jpg" })
@@ -52,11 +48,9 @@ export class UpdateRestaurantDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ example: 40, minimum: 1, maximum: 999 })
+  @ApiPropertyOptional({ example: 40 })
   @IsOptional()
   @IsInt()
-  @Min(1)
-  @Max(999)
   capacity?: number;
 
   @ApiPropertyOptional({ type: Object, additionalProperties: true })
