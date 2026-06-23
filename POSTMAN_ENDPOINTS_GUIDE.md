@@ -16,8 +16,9 @@ Protected routes use the `access_token` HttpOnly cookie:
 
 1. Call `POST {{baseUrl}}/auth/login`.
 2. Keep Postman's cookie jar enabled.
-3. Call protected routes in the same session.
-4. Call logout to clear the cookie.
+3. Call `GET {{baseUrl}}/auth/me` in the same session to verify the cookie.
+4. Call other protected routes in the same session.
+5. Call logout to clear the cookie.
 
 Do not use a Bearer token. Seed users are `roberto`, `lautaro`, `nico`, and `aida`; all use password `12345`.
 
@@ -43,13 +44,13 @@ Do not use a Bearer token. Seed users are `roberto`, `lautaro`, `nico`, and `aid
 
 `details` is optional. Unknown JSON fields return `400`.
 
-| Status | Meaning |
-| --- | --- |
-| `400` | Invalid path, query, or body |
-| `401` | Missing or invalid login cookie |
-| `403` | Authenticated user does not own the resource |
-| `404` | Resource does not exist |
-| `409` | Duplicate, capacity, or state conflict |
+| Status | Meaning                                      |
+| ------ | -------------------------------------------- |
+| `400`  | Invalid path, query, or body                 |
+| `401`  | Missing or invalid login cookie              |
+| `403`  | Authenticated user does not own the resource |
+| `404`  | Resource does not exist                      |
+| `409`  | Duplicate, capacity, or state conflict       |
 
 ### Restaurant
 
@@ -112,10 +113,36 @@ Do not use a Bearer token. Seed users are `roberto`, `lautaro`, `nico`, and `aid
 
 ## Authentication
 
-| Method and URL | Access | Body | Success | Errors |
-| --- | --- | --- | --- | --- |
-| `POST {{baseUrl}}/auth/login` | Public | Login JSON below | `200`, user JSON, sets cookie | `400`, `401` |
-| `POST {{baseUrl}}/auth/logout` | Protected | None | `204`, clears cookie | `401` |
+| Method and URL                   | Access    | Body                | Success                       | Errors       |
+| -------------------------------- | --------- | ------------------- | ----------------------------- | ------------ |
+| `POST {{baseUrl}}/auth/register` | Public    | Register JSON below | `201`, registered user JSON   | `400`, `409` |
+| `POST {{baseUrl}}/auth/login`    | Public    | Login JSON below    | `200`, user JSON, sets cookie | `400`, `401` |
+| `GET {{baseUrl}}/auth/me`        | Protected | None                | `200`, current user JSON      | `401`        |
+| `POST {{baseUrl}}/auth/logout`   | Protected | None                | `204`, clears cookie          | `401`        |
+
+Register request:
+
+```json
+{
+  "email": "new-user@example.com",
+  "username": "new-user",
+  "password": "12345"
+}
+```
+
+Register response:
+
+```json
+{
+  "id": 5,
+  "email": "new-user@example.com",
+  "username": "new-user"
+}
+```
+
+Registration creates the user but does not set the authentication cookie. Log in after registration to authenticate.
+
+Login request:
 
 ```json
 {
@@ -133,17 +160,29 @@ Login response:
 }
 ```
 
-Invalid credentials always return `Invalid username or password.` Registration is not implemented.
+Current user response:
+
+```json
+{
+  "id": 1,
+  "email": "roberto@example.com",
+  "username": "roberto"
+}
+```
+
+Invalid credentials always return `Invalid username or password.` Missing, invalid, or expired cookies on `GET /auth/me` and `POST /auth/logout` return the shared `401` error shape.
+
+If `GET {{baseUrl}}/auth/me` returns `404 Cannot GET /auth/me`, restart the NestJS dev server or rebuild before `npm run start:prod`; that response means the running process does not have the current route loaded.
 
 ## Restaurants
 
-| Method and URL | Access | Body | Success | Errors |
-| --- | --- | --- | --- | --- |
-| `GET {{baseUrl}}/restaurants` | Public | None | `200`, restaurant array | — |
-| `GET {{baseUrl}}/restaurants/1` | Public | None | `200`, restaurant | `400`, `404` |
-| `POST {{baseUrl}}/restaurants` | Protected | Full restaurant JSON | `201`, restaurant | `400`, `401` |
-| `PATCH {{baseUrl}}/restaurants/1` | Protected | Partial restaurant JSON | `200`, restaurant | `400`, `401`, `404` |
-| `DELETE {{baseUrl}}/restaurants/1` | Protected | None | `204` | `400`, `401`, `404`, `409` |
+| Method and URL                     | Access    | Body                    | Success                 | Errors                     |
+| ---------------------------------- | --------- | ----------------------- | ----------------------- | -------------------------- |
+| `GET {{baseUrl}}/restaurants`      | Public    | None                    | `200`, restaurant array | —                          |
+| `GET {{baseUrl}}/restaurants/1`    | Public    | None                    | `200`, restaurant       | `400`, `404`               |
+| `POST {{baseUrl}}/restaurants`     | Protected | Full restaurant JSON    | `201`, restaurant       | `400`, `401`               |
+| `PATCH {{baseUrl}}/restaurants/1`  | Protected | Partial restaurant JSON | `200`, restaurant       | `400`, `401`, `404`        |
+| `DELETE {{baseUrl}}/restaurants/1` | Protected | None                    | `204`                   | `400`, `401`, `404`, `409` |
 
 Create body:
 
@@ -225,12 +264,12 @@ All generated slots are returned. Seeded booked seats and confirmed reservations
 
 All routes are protected and use the authenticated user from the cookie.
 
-| Method and URL | Body | Success | Errors |
-| --- | --- | --- | --- |
-| `POST {{baseUrl}}/reservations` | Create JSON below | `201`, reservation | `400`, `401`, `404`, `409` |
-| `GET {{baseUrl}}/me/reservations` | None | `200`, reservation array | `401` |
-| `GET {{baseUrl}}/reservations/1` | None | `200`, reservation | `400`, `401`, `403`, `404` |
-| `PATCH {{baseUrl}}/reservations/1/cancel` | None | `200`, cancelled reservation | `400`, `401`, `403`, `404`, `409` |
+| Method and URL                            | Body              | Success                      | Errors                            |
+| ----------------------------------------- | ----------------- | ---------------------------- | --------------------------------- |
+| `POST {{baseUrl}}/reservations`           | Create JSON below | `201`, reservation           | `400`, `401`, `404`, `409`        |
+| `GET {{baseUrl}}/me/reservations`         | None              | `200`, reservation array     | `401`                             |
+| `GET {{baseUrl}}/reservations/1`          | None              | `200`, reservation           | `400`, `401`, `403`, `404`        |
+| `PATCH {{baseUrl}}/reservations/1/cancel` | None              | `200`, cancelled reservation | `400`, `401`, `403`, `404`, `409` |
 
 ```json
 {
@@ -258,11 +297,11 @@ All routes are protected and use the authenticated user from the cookie.
 
 All routes are protected and scoped to the authenticated user.
 
-| Method and URL | Body | Success | Errors |
-| --- | --- | --- | --- |
-| `GET {{baseUrl}}/me/favourites` | None | `200`, `{ "results": [] }` | `401` |
-| `POST {{baseUrl}}/me/favourites/1` | None | `201`, favourite | `400`, `401`, `404`, `409` |
-| `DELETE {{baseUrl}}/me/favourites/1` | None | `204` | `400`, `401`, `404` |
+| Method and URL                       | Body | Success                    | Errors                     |
+| ------------------------------------ | ---- | -------------------------- | -------------------------- |
+| `GET {{baseUrl}}/me/favourites`      | None | `200`, `{ "results": [] }` | `401`                      |
+| `POST {{baseUrl}}/me/favourites/1`   | None | `201`, favourite           | `400`, `401`, `404`, `409` |
+| `DELETE {{baseUrl}}/me/favourites/1` | None | `204`                      | `400`, `401`, `404`        |
 
 Favourite response:
 
@@ -285,12 +324,12 @@ Favourite response:
 
 ## Comments
 
-| Method and URL | Access | Body | Success | Errors |
-| --- | --- | --- | --- | --- |
-| `GET {{baseUrl}}/restaurants/1/comments` | Public | None | `200`, `{ "results": [] }` | `400`, `404` |
-| `POST {{baseUrl}}/restaurants/1/comments` | Protected | Create JSON | `201`, comment | `400`, `401`, `404` |
-| `PATCH {{baseUrl}}/comments/1` | Protected | Partial JSON | `200`, comment | `400`, `401`, `403`, `404` |
-| `DELETE {{baseUrl}}/comments/1` | Protected | None | `204` | `400`, `401`, `403`, `404` |
+| Method and URL                            | Access    | Body         | Success                    | Errors                     |
+| ----------------------------------------- | --------- | ------------ | -------------------------- | -------------------------- |
+| `GET {{baseUrl}}/restaurants/1/comments`  | Public    | None         | `200`, `{ "results": [] }` | `400`, `404`               |
+| `POST {{baseUrl}}/restaurants/1/comments` | Protected | Create JSON  | `201`, comment             | `400`, `401`, `404`        |
+| `PATCH {{baseUrl}}/comments/1`            | Protected | Partial JSON | `200`, comment             | `400`, `401`, `403`, `404` |
+| `DELETE {{baseUrl}}/comments/1`           | Protected | None         | `204`                      | `400`, `401`, `403`, `404` |
 
 Create body:
 
@@ -321,13 +360,14 @@ Update body:
 ## Suggested test order
 
 1. Login.
-2. List and read restaurants.
-3. Check availability.
-4. Create, list, read, and cancel a reservation.
-5. Add, list, and remove a favourite.
-6. List, create, update, and delete a comment.
-7. Create, update, and delete a restaurant without related records.
-8. Logout.
+2. Get the current authenticated user with `GET {{baseUrl}}/auth/me`.
+3. List and read restaurants.
+4. Check availability.
+5. Create, list, read, and cancel a reservation.
+6. Add, list, and remove a favourite.
+7. List, create, update, and delete a comment.
+8. Create, update, and delete a restaurant without related records.
+9. Logout.
 
 Useful Postman variables:
 

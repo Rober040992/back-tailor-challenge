@@ -13,7 +13,7 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 
 | Feature          | Status      | Current state                                                                                                               |
 | ---------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Authentication   | Implemented | Registration, login, JWT cookie authentication, protected routes, and logout                                                |
+| Authentication   | Implemented | Registration, login, current authenticated user, JWT cookie authentication, protected routes, and logout                    |
 | Restaurants CRUD | Implemented | Public reads and authenticated create, update, and delete                                                                   |
 | Availability     | Implemented | Public, on-demand slot calculation using settings, booked slots, and confirmed reservations                                 |
 | Reservations     | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement                         |
@@ -215,7 +215,17 @@ nico@example.com / nico
 aida@example.com / aida
 ```
 
-Passwords are hashed with `bcrypt`. See the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md) for login, logout, endpoint access, request bodies, and responses.
+Passwords are hashed with `bcrypt`. After login, Postman keeps the HttpOnly `access_token` cookie in its cookie jar. Use the same Postman session to call `GET /auth/me` and verify the current authenticated user:
+
+```json
+{
+  "id": 1,
+  "email": "roberto@example.com",
+  "username": "roberto"
+}
+```
+
+See the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md) for registration, login, current-user checks, logout, endpoint access, request bodies, and responses.
 
 ## Error format
 
@@ -304,26 +314,29 @@ Generated output was checked against `constitution.back.md`, the active specific
 6. Run `npm run seed`.
 7. Start the API with `npm run start:dev`.
 8. Call `POST /auth/login` using a sample user.
-9. Call `GET /restaurants` and `GET /restaurants/1`.
-10. Call `GET /restaurants/1/availability?date=2026-07-10&partySize=4`.
-11. Verify that booked slots reduce `availableSeats` and that the response includes unavailable slots.
-12. Create a reservation with authenticated `POST /reservations`.
-13. List it with `GET /me/reservations`.
-14. Read it with `GET /reservations/:reservationId`.
-15. Cancel it with `PATCH /reservations/:reservationId/cancel`.
-16. Verify that the cancelled reservation no longer reduces availability.
-17. Add a favourite with `POST /me/favourites/:restaurantId`.
-18. List it with `GET /me/favourites`.
-19. Remove it with `DELETE /me/favourites/:restaurantId`.
-20. List restaurant comments with `GET /restaurants/:restaurantId/comments`.
-21. Create a comment with authenticated `POST /restaurants/:restaurantId/comments`.
-22. Update it with `PATCH /comments/:commentId`.
-23. Delete it with `DELETE /comments/:commentId`.
-24. Create a restaurant with authenticated `POST /restaurants`.
-25. Update it with authenticated `PATCH /restaurants/:id`.
-26. Delete it with authenticated `DELETE /restaurants/:id`.
-27. Call `POST /auth/logout`.
-28. Run `npm run test`, `npm run test:e2e`, and `npm run build`.
+9. Call `GET /auth/me` in the same Postman session to verify the authenticated user.
+10. Call `GET /restaurants` and `GET /restaurants/1`.
+11. Call `GET /restaurants/1/availability?date=2026-07-10&partySize=4`.
+12. Verify that booked slots reduce `availableSeats` and that the response includes unavailable slots.
+13. Create a reservation with authenticated `POST /reservations`.
+14. List it with `GET /me/reservations`.
+15. Read it with `GET /reservations/:reservationId`.
+16. Cancel it with `PATCH /reservations/:reservationId/cancel`.
+17. Verify that the cancelled reservation no longer reduces availability.
+18. Add a favourite with `POST /me/favourites/:restaurantId`.
+19. List it with `GET /me/favourites`.
+20. Remove it with `DELETE /me/favourites/:restaurantId`.
+21. List restaurant comments with `GET /restaurants/:restaurantId/comments`.
+22. Create a comment with authenticated `POST /restaurants/:restaurantId/comments`.
+23. Update it with `PATCH /comments/:commentId`.
+24. Delete it with `DELETE /comments/:commentId`.
+25. Create a restaurant with authenticated `POST /restaurants`.
+26. Update it with authenticated `PATCH /restaurants/:id`.
+27. Delete it with authenticated `DELETE /restaurants/:id`.
+28. Call `POST /auth/logout`.
+29. Run `npm run test`, `npm run test:e2e`, and `npm run build`.
+
+If `GET /auth/me` returns `404 Cannot GET /auth/me`, the running server has not loaded the current source. Restart `npm run start:dev`, or run `npm run build` before `npm run start:prod`, and confirm no older backend process is using port `3000`.
 
 ---
 
