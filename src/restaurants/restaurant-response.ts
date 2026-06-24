@@ -22,6 +22,9 @@ export class RestaurantResponse {
   @ApiProperty({ example: 1 })
   id!: number;
 
+  @ApiProperty({ example: 1 })
+  ownerId!: number;
+
   @ApiProperty({ example: "The Example Table" })
   name!: string;
 
@@ -64,6 +67,9 @@ export class RestaurantResponse {
   @ApiProperty({ example: 12 })
   commentsCount!: number;
 
+  @ApiProperty({ example: true })
+  canEdit!: boolean;
+
   @ApiProperty({ type: String, format: "date-time" })
   createdAt!: Date;
 
@@ -71,7 +77,10 @@ export class RestaurantResponse {
   updatedAt!: Date;
 }
 
-export function toRestaurantResponse(restaurant: RestaurantRecord): RestaurantResponse {
+export function toRestaurantResponse(
+  restaurant: RestaurantRecord,
+  currentUserId?: number,
+): RestaurantResponse {
   const commentsCount = restaurant._count.comments;
   const averageRating =
     commentsCount === 0
@@ -80,6 +89,7 @@ export function toRestaurantResponse(restaurant: RestaurantRecord): RestaurantRe
 
   return {
     id: restaurant.id,
+    ownerId: restaurant.ownerId,
     name: restaurant.name,
     neighborhood: restaurant.neighborhood,
     address: restaurant.address,
@@ -94,6 +104,7 @@ export function toRestaurantResponse(restaurant: RestaurantRecord): RestaurantRe
     reservationSettings: restaurant.reservationSettings,
     averageRating,
     commentsCount,
+    canEdit: currentUserId === restaurant.ownerId,
     createdAt: restaurant.createdAt,
     updatedAt: restaurant.updatedAt,
   };

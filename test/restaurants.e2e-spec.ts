@@ -36,6 +36,7 @@ const minimalRestaurantPayload = {
 const restaurantResponseFields = [
   "address",
   "averageRating",
+  "canEdit",
   "capacity",
   "commentsCount",
   "createdAt",
@@ -48,6 +49,7 @@ const restaurantResponseFields = [
   "name",
   "neighborhood",
   "operatingHours",
+  "ownerId",
   "photograph",
   "reservationSettings",
   "updatedAt",
@@ -56,6 +58,8 @@ const restaurantResponseFields = [
 describe("Restaurants CRUD (e2e)", () => {
   let app: INestApplication<App>;
   let authenticationCookies: string[];
+  let otherUserAuthenticationCookies: string[];
+  let authenticatedUserId: number;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -72,6 +76,16 @@ describe("Restaurants CRUD (e2e)", () => {
     });
 
     authenticationCookies = loginResponse.headers["set-cookie"] as unknown as string[];
+    authenticatedUserId = (loginResponse.body as { id: number }).id;
+
+    const otherUserLoginResponse = await request(app.getHttpServer()).post("/auth/login").send({
+      username: "lautaro",
+      password: "12345",
+    });
+
+    otherUserAuthenticationCookies = otherUserLoginResponse.headers[
+      "set-cookie"
+    ] as unknown as string[];
   });
 
   it("allows public restaurant reads", async () => {
@@ -83,6 +97,7 @@ describe("Restaurants CRUD (e2e)", () => {
     if (restaurants.length > 0) {
       const restaurant = restaurants[0] as Record<string, unknown>;
       expect(Object.keys(restaurant).sort()).toEqual(restaurantResponseFields);
+      expect(restaurant.canEdit).toBe(false);
     }
   });
 
@@ -106,6 +121,12 @@ describe("Restaurants CRUD (e2e)", () => {
       .patch("/restaurants/1")
       .set("Cookie", authenticationCookies)
       .send({ unsupportedField: true })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post("/restaurants")
+      .set("Cookie", authenticationCookies)
+      .send({ ...minimalRestaurantPayload, ownerId: 999 })
       .expect(400);
   });
 
@@ -132,6 +153,8 @@ describe("Restaurants CRUD (e2e)", () => {
       reservationSettings: {},
       averageRating: null,
       commentsCount: 0,
+      ownerId: authenticatedUserId,
+      canEdit: true,
     });
 
     const getResponse = await request(app.getHttpServer())
@@ -140,7 +163,30 @@ describe("Restaurants CRUD (e2e)", () => {
     expect(getResponse.body).toMatchObject({
       id: restaurantId,
       name: minimalRestaurantPayload.name,
+      ownerId: authenticatedUserId,
+      canEdit: false,
     });
+
+    const authenticatedGetResponse = await request(app.getHttpServer())
+      .get(`/restaurants/${restaurantId}`)
+      .set("Cookie", authenticationCookies)
+      .expect(200);
+    expect(authenticatedGetResponse.body).toMatchObject({
+      id: restaurantId,
+      ownerId: authenticatedUserId,
+      canEdit: true,
+    });
+
+    await request(app.getHttpServer())
+      .patch(`/restaurants/${restaurantId}`)
+      .set("Cookie", otherUserAuthenticationCookies)
+      .send({ name: "Blocked CRUD Test Restaurant" })
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .delete(`/restaurants/${restaurantId}`)
+      .set("Cookie", otherUserAuthenticationCookies)
+      .expect(403);
 
     const updateResponse = await request(app.getHttpServer())
       .patch(`/restaurants/${restaurantId}`)

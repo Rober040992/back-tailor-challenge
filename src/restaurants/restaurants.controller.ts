@@ -17,6 +17,7 @@ import {
   ApiConflictResponse,
   ApiCookieAuth,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -30,11 +31,16 @@ import type { PublicUser } from "../auth/auth.repository";
 import { JwtAuthGuard } from "../auth/jwt/jwt-auth.guard";
 import { CreateRestaurantDto } from "./dto/create-restaurant.dto";
 import { UpdateRestaurantDto } from "./dto/update-restaurant.dto";
+import { OptionalJwtAuthGuard } from "./optional-jwt-auth.guard";
 import { RestaurantResponse } from "./restaurant-response";
 import { RestaurantsService } from "./restaurants.service";
 
 interface AuthenticatedRequest extends Request {
   user: PublicUser;
+}
+
+interface OptionalAuthenticatedRequest extends Request {
+  user?: PublicUser;
 }
 
 @Controller("restaurants")
@@ -43,20 +49,25 @@ export class RestaurantsController {
   constructor(private readonly restaurantsService: RestaurantsService) {}
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: "List restaurants" })
   @ApiOkResponse({ description: "Restaurants returned successfully.", type: [RestaurantResponse] })
-  findAll(): Promise<RestaurantResponse[]> {
-    return this.restaurantsService.findAll();
+  findAll(@Req() request: OptionalAuthenticatedRequest): Promise<RestaurantResponse[]> {
+    return this.restaurantsService.findAll(request.user?.id);
   }
 
   @Get(":id")
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: "Get a restaurant by ID" })
   @ApiParam({ name: "id", type: Number, example: 1 })
   @ApiOkResponse({ description: "Restaurant returned successfully.", type: RestaurantResponse })
   @ApiBadRequestResponse({ description: "The restaurant ID is invalid." })
   @ApiNotFoundResponse({ description: "The restaurant does not exist." })
-  findOne(@Param("id", ParseIntPipe) id: number): Promise<RestaurantResponse> {
-    return this.restaurantsService.findOne(id);
+  findOne(
+    @Req() request: OptionalAuthenticatedRequest,
+    @Param("id", ParseIntPipe) id: number,
+  ): Promise<RestaurantResponse> {
+    return this.restaurantsService.findOne(id, request.user?.id);
   }
 
   @Post()
@@ -82,6 +93,7 @@ export class RestaurantsController {
   @ApiBadRequestResponse({ description: "The ID or request body failed validation." })
   @ApiUnauthorizedResponse({ description: "Authentication is required." })
   @ApiNotFoundResponse({ description: "The restaurant does not exist." })
+  @ApiForbiddenResponse({ description: "Only the restaurant owner can update it." })
   update(
     @Req() request: AuthenticatedRequest,
     @Param("id", ParseIntPipe) id: number,
@@ -100,6 +112,7 @@ export class RestaurantsController {
   @ApiBadRequestResponse({ description: "The restaurant ID is invalid." })
   @ApiUnauthorizedResponse({ description: "Authentication is required." })
   @ApiNotFoundResponse({ description: "The restaurant does not exist." })
+  @ApiForbiddenResponse({ description: "Only the restaurant owner can delete it." })
   @ApiConflictResponse({ description: "The restaurant has related records." })
   delete(
     @Req() request: AuthenticatedRequest,

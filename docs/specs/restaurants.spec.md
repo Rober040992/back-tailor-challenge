@@ -6,6 +6,7 @@ Restaurant responses include:
 
 ```txt
 id
+ownerId
 name
 neighborhood
 address
@@ -20,9 +21,16 @@ operatingHours
 reservationSettings
 averageRating
 commentsCount
+canEdit
 createdAt
 updatedAt
 ```
+
+`canEdit` is calculated by the backend.
+
+`canEdit` is `true` only when the authenticated user owns the restaurant.
+
+`canEdit` is `false` for unauthenticated users or non-owners.
 
 ## Endpoints
 
@@ -44,6 +52,12 @@ Requires:
 name
 address
 description
+```
+
+Must not accept:
+
+```txt
+ownerId
 ```
 
 Accepts optionally:
@@ -74,6 +88,8 @@ operatingHours: {}
 reservationSettings: {}
 ```
 
+Sets `ownerId` from the authenticated JWT user.
+
 Returns `201 Created` with the created restaurant response.
 
 ### `PATCH /restaurants/:id`
@@ -85,8 +101,12 @@ Returns `200 OK` with the updated restaurant response.
 
 Returns `404 Not Found` when the restaurant does not exist.
 
+Returns `403 Forbidden` when the authenticated user is not the restaurant owner.
+
 ### `DELETE /restaurants/:id`
 
 Returns `204 No Content` with an empty response body.
 
 Returns `404 Not Found` when the restaurant does not exist.
+
+Returns `403 Forbidden` when the authenticated user is not the restaurant owner.

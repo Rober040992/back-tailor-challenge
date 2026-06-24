@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { ConflictException, Logger, NotFoundException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, Logger, NotFoundException } from "@nestjs/common";
 import { RestaurantRecord } from "./restaurant-response";
 import { RestaurantsRepository } from "./restaurants.repository";
 import { RestaurantsService } from "./restaurants.service";
@@ -7,6 +7,7 @@ import { RestaurantsService } from "./restaurants.service";
 function createRestaurantRecord(overrides: Partial<RestaurantRecord> = {}): RestaurantRecord {
   return {
     id: 1,
+    ownerId: 7,
     name: "Test Restaurant",
     neighborhood: "Downtown",
     address: "1 Main Street",
@@ -72,6 +73,7 @@ describe("RestaurantsService", () => {
       expect.objectContaining({
         averageRating: 4.5,
         commentsCount: 2,
+        canEdit: false,
       }),
     ]);
   });
@@ -79,10 +81,11 @@ describe("RestaurantsService", () => {
   it("returns a null average rating when the restaurant has no comments", async () => {
     restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord());
 
-    await expect(restaurantsService.findOne(1)).resolves.toEqual(
+    await expect(restaurantsService.findOne(1, 7)).resolves.toEqual(
       expect.objectContaining({
         averageRating: null,
         commentsCount: 0,
+        canEdit: true,
       }),
     );
   });
@@ -131,14 +134,36 @@ describe("RestaurantsService", () => {
       capacity: 1,
       operatingHours: {},
       reservationSettings: {},
+      owner: {
+        connect: {
+          id: 7,
+        },
+      },
     });
+  });
+
+  it("blocks update when the authenticated user is not the restaurant owner", async () => {
+    restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord({ ownerId: 7 }));
+
+    await expect(restaurantsService.update(8, 1, { name: "Blocked" })).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(restaurantsRepository.update).not.toHaveBeenCalled();
   });
 
   it("blocks deletion when the restaurant has related records", async () => {
     restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord());
     restaurantsRepository.hasRelations.mockResolvedValue(true);
 
-    await expect(restaurantsService.delete(1, 1)).rejects.toBeInstanceOf(ConflictException);
+    await expect(restaurantsService.delete(7, 1)).rejects.toBeInstanceOf(ConflictException);
+    expect(restaurantsRepository.delete).not.toHaveBeenCalled();
+  });
+
+  it("blocks deletion when the authenticated user is not the restaurant owner", async () => {
+    restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord({ ownerId: 7 }));
+
+    await expect(restaurantsService.delete(8, 1)).rejects.toBeInstanceOf(ForbiddenException);
+    expect(restaurantsRepository.hasRelations).not.toHaveBeenCalled();
     expect(restaurantsRepository.delete).not.toHaveBeenCalled();
   });
 
@@ -174,6 +199,6 @@ describe("RestaurantsService", () => {
     restaurantsRepository.hasRelations.mockResolvedValue(false);
     restaurantsRepository.delete.mockResolvedValue(false);
 
-    await expect(restaurantsService.delete(1, 1)).rejects.toBeInstanceOf(ConflictException);
+    await expect(restaurantsService.delete(7, 1)).rejects.toBeInstanceOf(ConflictException);
   });
 });

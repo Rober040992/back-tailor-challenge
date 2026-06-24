@@ -206,6 +206,7 @@ async function main(): Promise<void> {
             capacity: restaurant.capacity,
             operatingHours: restaurant.operating_hours,
             reservationSettings: restaurant.reservationSettings,
+            ownerId: roberto.id,
           },
         });
 

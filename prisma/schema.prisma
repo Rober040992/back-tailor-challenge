@@ -12,19 +12,21 @@ enum ReservationStatus {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  email        String        @unique
-  username     String        @unique
-  passwordHash String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  reservations Reservation[]
-  comments     Comment[]
-  favourites   Favourite[]
+  id               Int           @id @default(autoincrement())
+  email            String        @unique
+  username         String        @unique
+  passwordHash     String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  reservations     Reservation[]
+  comments         Comment[]
+  favourites       Favourite[]
+  ownedRestaurants Restaurant[]  @relation("RestaurantOwner")
 }
 
 model Restaurant {
   id                  Int           @id @default(autoincrement())
+  ownerId             Int
   name                String
   neighborhood        String
   address             String
@@ -39,6 +41,7 @@ model Restaurant {
   reservationSettings Json
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
+  owner               User          @relation("RestaurantOwner", fields: [ownerId], references: [id])
   reservations        Reservation[]
   comments            Comment[]
   favourites          Favourite[]

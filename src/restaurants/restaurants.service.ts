@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { logSafely } from "../common/logging/safe-logger";
 import { CreateRestaurantDto } from "./dto/create-restaurant.dto";
 import { UpdateRestaurantDto } from "./dto/update-restaurant.dto";
@@ -7,6 +13,7 @@ import { RestaurantsRepository } from "./restaurants.repository";
 
 const RESTAURANT_NOT_FOUND_MESSAGE = "Restaurant not found.";
 const RESTAURANT_HAS_RELATIONS_MESSAGE = "Restaurant with related records cannot be deleted.";
+const RESTAURANT_OWNER_REQUIRED_MESSAGE = "Only the restaurant owner can perform this action.";
 
 @Injectable()
 export class RestaurantsService {
@@ -14,16 +21,16 @@ export class RestaurantsService {
 
   constructor(private readonly restaurantsRepository: RestaurantsRepository) {}
 
-  async findAll(): Promise<RestaurantResponse[]> {
+  async findAll(currentUserId?: number): Promise<RestaurantResponse[]> {
     const restaurants = await this.restaurantsRepository.findAll();
 
-    return restaurants.map(toRestaurantResponse);
+    return restaurants.map(restaurant => toRestaurantResponse(restaurant, currentUserId));
   }
 
-  async findOne(id: number): Promise<RestaurantResponse> {
+  async findOne(id: number, currentUserId?: number): Promise<RestaurantResponse> {
     const restaurant = await this.findExisting(id);
 
-    return toRestaurantResponse(restaurant);
+    return toRestaurantResponse(restaurant, currentUserId);
   }
 
   async create(
@@ -44,6 +51,11 @@ export class RestaurantsService {
       capacity: createRestaurantDto.capacity ?? 1,
       operatingHours: createRestaurantDto.operatingHours ?? {},
       reservationSettings: createRestaurantDto.reservationSettings ?? {},
+      owner: {
+        connect: {
+          id: userId,
+        },
+      },
     });
 
     logSafely(
@@ -52,7 +64,7 @@ export class RestaurantsService {
       `[RESTAURANT] created restaurantId=${restaurant.id} userId=${userId}`,
     );
 
-    return toRestaurantResponse(restaurant);
+    return toRestaurantResponse(restaurant, userId);
   }
 
   async update(
@@ -60,7 +72,11 @@ export class RestaurantsService {
     id: number,
     updateRestaurantDto: UpdateRestaurantDto,
   ): Promise<RestaurantResponse> {
-    await this.findExisting(id);
+    const existingRestaurant = await this.findExisting(id);
+
+    if (existingRestaurant.ownerId !== userId) {
+      throw new ForbiddenException(RESTAURANT_OWNER_REQUIRED_MESSAGE);
+    }
 
     const restaurant = await this.restaurantsRepository.update(id, updateRestaurantDto);
 
@@ -70,11 +86,15 @@ export class RestaurantsService {
       `[RESTAURANT] updated restaurantId=${restaurant.id} userId=${userId}`,
     );
 
-    return toRestaurantResponse(restaurant);
+    return toRestaurantResponse(restaurant, userId);
   }
 
   async delete(userId: number, id: number): Promise<void> {
-    await this.findExisting(id);
+    const restaurant = await this.findExisting(id);
+
+    if (restaurant.ownerId !== userId) {
+      throw new ForbiddenException(RESTAURANT_OWNER_REQUIRED_MESSAGE);
+    }
 
     if (await this.restaurantsRepository.hasRelations(id)) {
       throw new ConflictException(RESTAURANT_HAS_RELATIONS_MESSAGE);
