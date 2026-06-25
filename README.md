@@ -320,6 +320,9 @@ nico@example.com / nico
 aida@example.com / aida
 ```
 
+> [!IMPORTANT]
+> All restaurants imported from the seed JSON are assigned to `roberto` as a deterministic local testing decision. The source JSON does not include `ownerId`, so this lets reviewers use the documented `roberto` credentials to test ownership-based restaurant update and delete flows easily.
+
 Passwords are hashed with `bcrypt`. After login, Postman keeps the HttpOnly `access_token` cookie in its cookie jar. Use the same Postman session to call `GET /auth/me` and verify the current authenticated user:
 
 ```json
