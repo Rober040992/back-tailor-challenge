@@ -427,10 +427,13 @@ Status codes:
 403 Forbidden
 404 Not Found
 409 Conflict
+429 Too Many Requests
 500 Internal Server Error
 ```
 
 Use `409 Conflict` for overbooking, duplicate favourites, duplicate email, duplicate username and invalid state conflicts.
+
+Use `429 Too Many Requests` for global HTTP rate limiting.
 
 ## Business rules
 

@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import { createValidationException } from "./common/errors/validation-error.factory";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { httpLoggingMiddleware } from "./common/middleware/http-logging.middleware";
+import { createRateLimitMiddleware } from "./common/middleware/rate-limit.middleware";
 import { configureSwagger } from "./common/swagger/swagger.setup";
 
 export function configureApplication(app: INestApplication): void {
@@ -12,6 +13,7 @@ export function configureApplication(app: INestApplication): void {
   });
 
   app.use(httpLoggingMiddleware);
+  app.use(createRateLimitMiddleware());
   app.use(cookieParser());
 
   app.useGlobalPipes(
