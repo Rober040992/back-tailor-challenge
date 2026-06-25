@@ -1,0 +1,33 @@
+# Local development only.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: tailor
+      POSTGRES_PASSWORD: tailor
+      POSTGRES_DB: tailor
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tailor -d tailor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: postgresql://tailor:tailor@postgres:5432/tailor?schema=public
+      JWT_SECRET: local-docker-jwt-secret
+      PORT: 3000
+      SWAGGER_ENABLED: "false"
+      FRONTEND_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

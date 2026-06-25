@@ -185,6 +185,110 @@ npm run start:prod
 
 Run `npm run build` before `npm run start:prod`.
 
+## Running with Docker
+
+Docker Compose starts the backend with its own PostgreSQL service for local development. This database is separate from any PostgreSQL database running directly on your machine.
+
+### Essential Docker flow
+
+Build and start your local Docker containers:
+
+```bash
+npm run docker:up:build
+```
+
+Apply migrations to the Docker database:
+
+```bash
+npm run docker:migrate
+```
+
+Seed the Docker database:
+
+```bash
+npm run docker:seed
+```
+
+The API is available at:
+
+```txt
+http://localhost:3000
+```
+
+Stop the containers and keep the Docker database volume:
+
+```bash
+npm run docker:down
+```
+
+Stop the containers and delete the Docker database volume when you want a clean Docker database:
+
+```bash
+npm run docker:down:volumes
+```
+
+### Docker command reference
+
+Validate the Compose file without starting containers:
+
+```bash
+npm run docker:config
+```
+
+Build the backend Docker image:
+
+```bash
+npm run docker:build
+```
+
+Start existing containers in the background:
+
+```bash
+npm run docker:up
+```
+
+Build the image and start containers in the background:
+
+```bash
+npm run docker:up:build
+```
+
+Show the current container status, ports, and health:
+
+```bash
+npm run docker:ps
+```
+
+Follow backend container logs:
+
+```bash
+npm run docker:logs
+```
+
+Apply Prisma migrations to the Docker PostgreSQL database:
+
+```bash
+npm run docker:migrate
+```
+
+Seed the Docker PostgreSQL database. This resets the sample data inside Docker only:
+
+```bash
+npm run docker:seed
+```
+
+Stop containers while keeping the Docker database volume:
+
+```bash
+npm run docker:down
+```
+
+Stop containers and delete the Docker database volume:
+
+```bash
+npm run docker:down:volumes
+```
+
 ## Tests and quality checks
 
 ```bash
@@ -294,7 +398,6 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 - Availability and Reservations share slot calculation without coupling their services.
 - Restaurants use ownership for update/delete instead of an admin role.
 - Swagger is available locally and can be explicitly enabled in production.
-- Docker remains an optional final improvement.
 
 ## AI usage notes
 
