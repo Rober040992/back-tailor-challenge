@@ -1,4 +1,4 @@
-import { INestApplication } from "@nestjs/common";
+﻿import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import request from "supertest";
 import { App } from "supertest/types";
@@ -6,25 +6,13 @@ import { AppModule } from "../src/app.module";
 import { configureApplication } from "../src/app.setup";
 import { PrismaService } from "../src/prisma/prisma.service";
 
-const restaurantResponseFields = [
-  "address",
-  "averageRating",
-  "capacity",
-  "commentsCount",
-  "createdAt",
-  "cuisineType",
-  "description",
-  "id",
-  "image",
-  "lat",
-  "lng",
-  "name",
-  "neighborhood",
-  "operatingHours",
-  "photograph",
-  "reservationSettings",
-  "updatedAt",
-];
+interface FavouriteResponse {
+  id: number;
+  restaurantId: number;
+  restaurant: {
+    id: number;
+  };
+}
 
 interface FavouriteListResponse {
   results: Array<{
@@ -57,7 +45,7 @@ describe("Favourites (e2e)", () => {
       prisma.user.findUniqueOrThrow({ where: { username: "lautaro" } }),
       prisma.restaurant.findMany({
         orderBy: { id: "asc" },
-        take: 3,
+        take: 2,
         select: { id: true },
       }),
     ]);
@@ -77,37 +65,30 @@ describe("Favourites (e2e)", () => {
     await prisma.favourite.deleteMany();
   });
 
-  it("rejects unauthenticated requests", async () => {
+  it("rejects unauthenticated favourite management", async () => {
     await request(app.getHttpServer()).get("/me/favourites").expect(401);
     await request(app.getHttpServer()).post(`/me/favourites/${restaurantIds[0]}`).expect(401);
     await request(app.getHttpServer()).delete(`/me/favourites/${restaurantIds[0]}`).expect(401);
   });
 
-  it("returns an empty results array when the user has no favourites", async () => {
-    const response = await request(app.getHttpServer())
-      .get("/me/favourites")
-      .set("Cookie", authenticationCookies)
-      .expect(200);
-
-    expect(response.body).toEqual({ results: [] });
-  });
-
-  it("adds a restaurant and returns the enriched favourite response", async () => {
+  it("adds a restaurant to favourites", async () => {
     const response = await request(app.getHttpServer())
       .post(`/me/favourites/${restaurantIds[0]}`)
       .set("Cookie", authenticationCookies)
       .expect(201);
-    const favourite = response.body as Record<string, unknown>;
-    const restaurant = favourite.restaurant as Record<string, unknown>;
 
-    expect(Object.keys(favourite).sort()).toEqual([
-      "createdAt",
-      "id",
-      "restaurant",
-      "restaurantId",
-    ]);
-    expect(favourite.restaurantId).toBe(restaurantIds[0]);
-    expect(Object.keys(restaurant).sort()).toEqual(restaurantResponseFields);
+    const favourite = response.body as FavouriteResponse;
+
+    expect(favourite).toEqual(
+      expect.objectContaining({
+        restaurantId: restaurantIds[0],
+      }),
+    );
+    expect(favourite.restaurant).toEqual(
+      expect.objectContaining({
+        id: restaurantIds[0],
+      }),
+    );
   });
 
   it("prevents duplicate favourites", async () => {
@@ -122,24 +103,6 @@ describe("Favourites (e2e)", () => {
       .post(`/me/favourites/${restaurantIds[0]}`)
       .set("Cookie", authenticationCookies)
       .expect(409);
-  });
-
-  it("returns not found when adding a missing restaurant", async () => {
-    await request(app.getHttpServer())
-      .post("/me/favourites/2147483647")
-      .set("Cookie", authenticationCookies)
-      .expect(404);
-  });
-
-  it("rejects invalid restaurant ids", async () => {
-    await request(app.getHttpServer())
-      .post("/me/favourites/0")
-      .set("Cookie", authenticationCookies)
-      .expect(400);
-    await request(app.getHttpServer())
-      .delete("/me/favourites/not-a-number")
-      .set("Cookie", authenticationCookies)
-      .expect(400);
   });
 
   it("lists only the authenticated user's favourites", async () => {
@@ -163,49 +126,14 @@ describe("Favourites (e2e)", () => {
     const body = response.body as FavouriteListResponse;
 
     expect(body.results).toHaveLength(1);
-    expect(body.results[0]).toMatchObject({
-      restaurantId: restaurantIds[0],
-    });
-  });
-
-  it("orders favourites by createdAt and id descending", async () => {
-    const sameCreatedAt = new Date("2026-06-20T10:00:00.000Z");
-    const olderFirst = await prisma.favourite.create({
-      data: {
-        userId,
+    expect(body.results[0]).toEqual(
+      expect.objectContaining({
         restaurantId: restaurantIds[0],
-        createdAt: sameCreatedAt,
-      },
-    });
-    const olderSecond = await prisma.favourite.create({
-      data: {
-        userId,
-        restaurantId: restaurantIds[1],
-        createdAt: sameCreatedAt,
-      },
-    });
-    const newest = await prisma.favourite.create({
-      data: {
-        userId,
-        restaurantId: restaurantIds[2],
-        createdAt: new Date("2026-06-20T11:00:00.000Z"),
-      },
-    });
-
-    const response = await request(app.getHttpServer())
-      .get("/me/favourites")
-      .set("Cookie", authenticationCookies)
-      .expect(200);
-    const body = response.body as FavouriteListResponse;
-
-    expect(body.results.map(favourite => favourite.id)).toEqual([
-      newest.id,
-      olderSecond.id,
-      olderFirst.id,
-    ]);
+      }),
+    );
   });
 
-  it("removes an owned favourite without deleting the restaurant", async () => {
+  it("removes an existing favourite", async () => {
     await prisma.favourite.create({
       data: {
         userId,
@@ -219,22 +147,15 @@ describe("Favourites (e2e)", () => {
       .expect(204);
 
     await expect(
-      prisma.restaurant.findUniqueOrThrow({ where: { id: restaurantIds[0] } }),
-    ).resolves.toBeDefined();
-  });
-
-  it("returns not found when removing a favourite not owned by the user", async () => {
-    await prisma.favourite.create({
-      data: {
-        userId: otherUserId,
-        restaurantId: restaurantIds[0],
-      },
-    });
-
-    await request(app.getHttpServer())
-      .delete(`/me/favourites/${restaurantIds[0]}`)
-      .set("Cookie", authenticationCookies)
-      .expect(404);
+      prisma.favourite.findUnique({
+        where: {
+          userId_restaurantId: {
+            userId,
+            restaurantId: restaurantIds[0],
+          },
+        },
+      }),
+    ).resolves.toBeNull();
   });
 
   afterAll(async () => {

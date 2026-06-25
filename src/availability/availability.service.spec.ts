@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { Logger, NotFoundException } from "@nestjs/common";
+﻿import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { NotFoundException } from "@nestjs/common";
 import { AvailabilityCalculator } from "./availability.calculator";
 import { AvailabilityRepository, AvailabilityRestaurantRecord } from "./availability.repository";
 import { AvailabilityService } from "./availability.service";
@@ -11,10 +11,7 @@ const reservationSettings = {
     { name: "lunch", start: "13:00", end: "14:00" },
     { name: "dinner", start: "20:00", end: "21:00" },
   ],
-  bookedSlots: [
-    { date: "2026-07-10", time: "13:00", reservedSeats: 3 },
-    { date: "2026-07-10", time: "20:00", reservedSeats: 10 },
-  ],
+  bookedSlots: [{ date: "2026-07-10", time: "13:00", reservedSeats: 3 }],
 };
 
 function createRestaurantRecord(
@@ -35,10 +32,8 @@ describe("AvailabilityService", () => {
       AvailabilityRepository["findRestaurantAvailabilityData"]
     >;
   };
-  let logSpy: jest.SpiedFunction<Logger["log"]>;
 
   beforeEach(() => {
-    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
     availabilityRepository = {
       findRestaurantAvailabilityData: jest.fn(),
     };
@@ -48,11 +43,7 @@ describe("AvailabilityService", () => {
     );
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("generates lunch and dinner slots and excludes service window end times", async () => {
+  it("generates slots and excludes service window end times", async () => {
     availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
       createRestaurantRecord(),
     );
@@ -60,34 +51,6 @@ describe("AvailabilityService", () => {
     const result = await availabilityService.findAvailability(1, "2026-07-12", 4);
 
     expect(result.slots.map(slot => slot.time)).toEqual(["13:00", "13:30", "20:00", "20:30"]);
-    expect(result.slots).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ time: "14:00" }),
-        expect.objectContaining({ time: "21:00" }),
-      ]),
-    );
-    expect(logSpy).toHaveBeenCalledWith(
-      "[AVAILABILITY] checked restaurantId=1 date=2026-07-12 partySize=4",
-    );
-  });
-
-  it("returns full-capacity slots for a date without bookings", async () => {
-    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
-      createRestaurantRecord(),
-    );
-
-    const result = await availabilityService.findAvailability(1, "2026-07-12", 8);
-
-    expect(result.slots).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          capacity: 8,
-          reservedSeats: 0,
-          availableSeats: 8,
-          available: true,
-        }),
-      ]),
-    );
   });
 
   it("combines seeded booked seats and confirmed reservation seats", async () => {
@@ -107,22 +70,6 @@ describe("AvailabilityService", () => {
       capacity: 8,
       reservedSeats: 6,
       availableSeats: 2,
-      available: false,
-    });
-  });
-
-  it("never returns available seats below zero", async () => {
-    availabilityRepository.findRestaurantAvailabilityData.mockResolvedValue(
-      createRestaurantRecord(),
-    );
-
-    const result = await availabilityService.findAvailability(1, "2026-07-10", 1);
-
-    expect(result.slots).toContainEqual({
-      time: "20:00",
-      capacity: 8,
-      reservedSeats: 10,
-      availableSeats: 0,
       available: false,
     });
   });

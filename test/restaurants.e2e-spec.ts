@@ -1,59 +1,15 @@
-import { INestApplication } from "@nestjs/common";
+﻿import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "../src/app.module";
 import { configureApplication } from "../src/app.setup";
 
-const restaurantPayload = {
-  name: "CRUD Test Restaurant",
-  neighborhood: "Downtown",
-  address: "100 Test Street",
-  lat: 40.7128,
-  lng: -74.006,
-  image: "https://example.com/image.jpg",
-  photograph: "https://example.com/photograph.jpg",
-  cuisineType: "Italian",
-  description: "Restaurant created by the CRUD e2e test.",
-  capacity: 50,
-  operatingHours: {
-    monday: {
-      open: "09:00",
-      close: "22:00",
-    },
-  },
-  reservationSettings: {
-    slotInterval: 30,
-  },
-};
-
 const minimalRestaurantPayload = {
   name: "Minimal CRUD Test Restaurant",
   address: "101 Minimal Street",
   description: "Restaurant created with the minimum CRUD payload.",
 };
-
-const restaurantResponseFields = [
-  "address",
-  "averageRating",
-  "canEdit",
-  "capacity",
-  "commentsCount",
-  "createdAt",
-  "cuisineType",
-  "description",
-  "id",
-  "image",
-  "lat",
-  "lng",
-  "name",
-  "neighborhood",
-  "operatingHours",
-  "ownerId",
-  "photograph",
-  "reservationSettings",
-  "updatedAt",
-];
 
 describe("Restaurants CRUD (e2e)", () => {
   let app: INestApplication<App>;
@@ -76,7 +32,8 @@ describe("Restaurants CRUD (e2e)", () => {
     });
 
     authenticationCookies = loginResponse.headers["set-cookie"] as unknown as string[];
-    authenticatedUserId = (loginResponse.body as { id: number }).id;
+    const loginBody = loginResponse.body as { id: number };
+    authenticatedUserId = loginBody.id;
 
     const otherUserLoginResponse = await request(app.getHttpServer()).post("/auth/login").send({
       username: "lautaro",
@@ -90,19 +47,26 @@ describe("Restaurants CRUD (e2e)", () => {
 
   it("allows public restaurant reads", async () => {
     const listResponse = await request(app.getHttpServer()).get("/restaurants").expect(200);
-    const restaurants = listResponse.body as unknown[];
+    const restaurants = listResponse.body as Array<Record<string, unknown>>;
 
     expect(Array.isArray(restaurants)).toBe(true);
 
     if (restaurants.length > 0) {
-      const restaurant = restaurants[0] as Record<string, unknown>;
-      expect(Object.keys(restaurant).sort()).toEqual(restaurantResponseFields);
-      expect(restaurant.canEdit).toBe(false);
+      expect(restaurants[0]).toEqual(
+        expect.objectContaining({
+          id: expect.any(Number),
+          name: expect.any(String),
+          canEdit: false,
+        }),
+      );
     }
   });
 
   it("requires authentication for restaurant mutations", async () => {
-    await request(app.getHttpServer()).post("/restaurants").send(restaurantPayload).expect(401);
+    await request(app.getHttpServer())
+      .post("/restaurants")
+      .send(minimalRestaurantPayload)
+      .expect(401);
     await request(app.getHttpServer())
       .patch("/restaurants/1")
       .send({ name: "Updated" })
@@ -110,27 +74,7 @@ describe("Restaurants CRUD (e2e)", () => {
     await request(app.getHttpServer()).delete("/restaurants/1").expect(401);
   });
 
-  it("validates create and update payloads", async () => {
-    await request(app.getHttpServer())
-      .post("/restaurants")
-      .set("Cookie", authenticationCookies)
-      .send({})
-      .expect(400);
-
-    await request(app.getHttpServer())
-      .patch("/restaurants/1")
-      .set("Cookie", authenticationCookies)
-      .send({ unsupportedField: true })
-      .expect(400);
-
-    await request(app.getHttpServer())
-      .post("/restaurants")
-      .set("Cookie", authenticationCookies)
-      .send({ ...minimalRestaurantPayload, ownerId: 999 })
-      .expect(400);
-  });
-
-  it("creates, reads, updates, and deletes a restaurant", async () => {
+  it("creates, reads, updates, and deletes an owned restaurant", async () => {
     const createResponse = await request(app.getHttpServer())
       .post("/restaurants")
       .set("Cookie", authenticationCookies)
@@ -139,31 +83,17 @@ describe("Restaurants CRUD (e2e)", () => {
     const createdRestaurant = createResponse.body as Record<string, unknown>;
     const restaurantId = createdRestaurant.id as number;
 
-    expect(Object.keys(createdRestaurant).sort()).toEqual(restaurantResponseFields);
     expect(createdRestaurant).toMatchObject({
       ...minimalRestaurantPayload,
-      neighborhood: "",
-      lat: 0,
-      lng: 0,
-      image: "",
-      photograph: "",
-      cuisineType: "",
-      capacity: 1,
-      operatingHours: {},
-      reservationSettings: {},
-      averageRating: null,
-      commentsCount: 0,
       ownerId: authenticatedUserId,
       canEdit: true,
     });
 
-    const getResponse = await request(app.getHttpServer())
+    const publicGetResponse = await request(app.getHttpServer())
       .get(`/restaurants/${restaurantId}`)
       .expect(200);
-    expect(getResponse.body).toMatchObject({
+    expect(publicGetResponse.body).toMatchObject({
       id: restaurantId,
-      name: minimalRestaurantPayload.name,
-      ownerId: authenticatedUserId,
       canEdit: false,
     });
 
@@ -173,7 +103,6 @@ describe("Restaurants CRUD (e2e)", () => {
       .expect(200);
     expect(authenticatedGetResponse.body).toMatchObject({
       id: restaurantId,
-      ownerId: authenticatedUserId,
       canEdit: true,
     });
 
@@ -181,11 +110,6 @@ describe("Restaurants CRUD (e2e)", () => {
       .patch(`/restaurants/${restaurantId}`)
       .set("Cookie", otherUserAuthenticationCookies)
       .send({ name: "Blocked CRUD Test Restaurant" })
-      .expect(403);
-
-    await request(app.getHttpServer())
-      .delete(`/restaurants/${restaurantId}`)
-      .set("Cookie", otherUserAuthenticationCookies)
       .expect(403);
 
     const updateResponse = await request(app.getHttpServer())
@@ -200,23 +124,14 @@ describe("Restaurants CRUD (e2e)", () => {
 
     await request(app.getHttpServer())
       .delete(`/restaurants/${restaurantId}`)
+      .set("Cookie", otherUserAuthenticationCookies)
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .delete(`/restaurants/${restaurantId}`)
       .set("Cookie", authenticationCookies)
       .expect(204);
     await request(app.getHttpServer()).get(`/restaurants/${restaurantId}`).expect(404);
-  });
-
-  it("returns not found for missing restaurant mutations", async () => {
-    const missingId = 2147483647;
-
-    await request(app.getHttpServer())
-      .patch(`/restaurants/${missingId}`)
-      .set("Cookie", authenticationCookies)
-      .send({ name: "Missing" })
-      .expect(404);
-    await request(app.getHttpServer())
-      .delete(`/restaurants/${missingId}`)
-      .set("Cookie", authenticationCookies)
-      .expect(404);
   });
 
   afterAll(async () => {

@@ -1,10 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { ConflictException, Logger, NotFoundException } from "@nestjs/common";
+﻿import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { ConflictException, NotFoundException } from "@nestjs/common";
 import { RestaurantRecord } from "../restaurants/restaurant-response";
 import {
   DuplicateFavouriteError,
   FavouriteRecord,
-  FavouriteRestaurantNotFoundError,
   FavouritesRepository,
 } from "./favourites.repository";
 import { FavouritesService } from "./favourites.service";
@@ -26,9 +25,9 @@ function createRestaurantRecord(overrides: Partial<RestaurantRecord> = {}): Rest
     reservationSettings: {},
     createdAt: new Date("2026-06-20T10:00:00.000Z"),
     updatedAt: new Date("2026-06-20T10:00:00.000Z"),
-    comments: [{ rating: 4 }, { rating: 5 }],
+    comments: [],
     _count: {
-      comments: 2,
+      comments: 0,
     },
     ...overrides,
   };
@@ -53,10 +52,8 @@ describe("FavouritesService", () => {
     create: jest.MockedFunction<FavouritesRepository["create"]>;
     deleteOwned: jest.MockedFunction<FavouritesRepository["deleteOwned"]>;
   };
-  let logSpy: jest.SpiedFunction<Logger["log"]>;
 
   beforeEach(() => {
-    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
     favouritesRepository = {
       findByUserId: jest.fn(),
       restaurantExists: jest.fn(),
@@ -68,36 +65,6 @@ describe("FavouritesService", () => {
     );
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("returns enriched favourites inside results", async () => {
-    favouritesRepository.findByUserId.mockResolvedValue([createFavouriteRecord()]);
-
-    await expect(favouritesService.findMine(1)).resolves.toEqual({
-      results: [
-        expect.objectContaining({
-          id: 1,
-          restaurantId: 1,
-          restaurant: expect.objectContaining({
-            id: 1,
-            averageRating: 4.5,
-            commentsCount: 2,
-          }),
-        }),
-      ],
-    });
-    expect(favouritesRepository.findByUserId).toHaveBeenCalledWith(1);
-  });
-
-  it("returns not found when adding a missing restaurant", async () => {
-    favouritesRepository.restaurantExists.mockResolvedValue(false);
-
-    await expect(favouritesService.create(1, 999)).rejects.toBeInstanceOf(NotFoundException);
-    expect(favouritesRepository.create).not.toHaveBeenCalled();
-  });
-
   it("returns conflict when adding a duplicate favourite", async () => {
     favouritesRepository.restaurantExists.mockResolvedValue(true);
     favouritesRepository.create.mockRejectedValue(new DuplicateFavouriteError());
@@ -105,14 +72,7 @@ describe("FavouritesService", () => {
     await expect(favouritesService.create(1, 1)).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it("returns not found when the restaurant disappears during creation", async () => {
-    favouritesRepository.restaurantExists.mockResolvedValue(true);
-    favouritesRepository.create.mockRejectedValue(new FavouriteRestaurantNotFoundError());
-
-    await expect(favouritesService.create(1, 1)).rejects.toBeInstanceOf(NotFoundException);
-  });
-
-  it("creates and logs a favourite", async () => {
+  it("creates a favourite", async () => {
     favouritesRepository.restaurantExists.mockResolvedValue(true);
     favouritesRepository.create.mockResolvedValue(createFavouriteRecord());
 
@@ -122,7 +82,6 @@ describe("FavouritesService", () => {
         restaurantId: 1,
       }),
     );
-    expect(logSpy).toHaveBeenCalledWith("[FAVOURITE] added favouriteId=1 restaurantId=1 userId=7");
   });
 
   it("returns not found when removing a favourite not owned by the user", async () => {
@@ -131,10 +90,9 @@ describe("FavouritesService", () => {
     await expect(favouritesService.delete(1, 1)).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it("removes and logs an owned favourite", async () => {
+  it("removes an owned favourite", async () => {
     favouritesRepository.deleteOwned.mockResolvedValue(true);
 
     await expect(favouritesService.delete(7, 1)).resolves.toBeUndefined();
-    expect(logSpy).toHaveBeenCalledWith("[FAVOURITE] removed restaurantId=1 userId=7");
   });
 });

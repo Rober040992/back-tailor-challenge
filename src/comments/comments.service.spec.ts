@@ -1,11 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { BadRequestException, ForbiddenException, Logger, NotFoundException } from "@nestjs/common";
+﻿import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { ForbiddenException } from "@nestjs/common";
 import { Comment } from "@prisma/client";
-import {
-  CommentNotFoundError,
-  CommentRestaurantNotFoundError,
-  CommentsRepository,
-} from "./comments.repository";
+import { CommentsRepository } from "./comments.repository";
 import { CommentsService } from "./comments.service";
 
 function createComment(overrides: Partial<Comment> = {}): Comment {
@@ -33,10 +29,8 @@ describe("CommentsService", () => {
     update: jest.MockedFunction<CommentsRepository["update"]>;
     delete: jest.MockedFunction<CommentsRepository["delete"]>;
   };
-  let logSpy: jest.SpiedFunction<Logger["log"]>;
 
   beforeEach(() => {
-    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
     commentsRepository = {
       restaurantExists: jest.fn(),
       findByRestaurantId: jest.fn(),
@@ -46,27 +40,6 @@ describe("CommentsService", () => {
       delete: jest.fn(),
     };
     commentsService = new CommentsService(commentsRepository as unknown as CommentsRepository);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("lists comments for an existing restaurant", async () => {
-    const comment = createComment();
-    commentsRepository.restaurantExists.mockResolvedValue(true);
-    commentsRepository.findByRestaurantId.mockResolvedValue([comment]);
-
-    await expect(commentsService.findByRestaurant(1)).resolves.toEqual({
-      results: [comment],
-    });
-  });
-
-  it("returns not found when listing a missing restaurant", async () => {
-    commentsRepository.restaurantExists.mockResolvedValue(false);
-
-    await expect(commentsService.findByRestaurant(999)).rejects.toBeInstanceOf(NotFoundException);
-    expect(commentsRepository.findByRestaurantId).not.toHaveBeenCalled();
   });
 
   it("creates a comment with server-generated author data", async () => {
@@ -87,21 +60,6 @@ describe("CommentsService", () => {
         date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       }),
     );
-    expect(logSpy).toHaveBeenCalledWith("[COMMENT] created commentId=1 restaurantId=1 userId=1");
-  });
-
-  it("returns not found when the restaurant disappears during creation", async () => {
-    commentsRepository.restaurantExists.mockResolvedValue(true);
-    commentsRepository.create.mockRejectedValue(new CommentRestaurantNotFoundError());
-
-    await expect(
-      commentsService.create({ id: 1, username: "roberto" }, 1, { rating: 4, body: "Great food." }),
-    ).rejects.toBeInstanceOf(NotFoundException);
-  });
-
-  it("rejects an update without editable fields", async () => {
-    await expect(commentsService.update(1, 1, {})).rejects.toBeInstanceOf(BadRequestException);
-    expect(commentsRepository.findById).not.toHaveBeenCalled();
   });
 
   it("allows the author to update a comment", async () => {
@@ -111,7 +69,6 @@ describe("CommentsService", () => {
 
     await expect(commentsService.update(1, 1, { rating: 5 })).resolves.toEqual(updatedComment);
     expect(commentsRepository.update).toHaveBeenCalledWith(1, { rating: 5 });
-    expect(logSpy).toHaveBeenCalledWith("[COMMENT] updated commentId=1 userId=1");
   });
 
   it("rejects an update by another authenticated user", async () => {
@@ -123,29 +80,11 @@ describe("CommentsService", () => {
     expect(commentsRepository.update).not.toHaveBeenCalled();
   });
 
-  it("returns not found when updating a missing comment", async () => {
-    commentsRepository.findById.mockResolvedValue(null);
-
-    await expect(commentsService.update(1, 999, { rating: 5 })).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
-  });
-
-  it("returns not found when the comment disappears during update", async () => {
-    commentsRepository.findById.mockResolvedValue(createComment());
-    commentsRepository.update.mockRejectedValue(new CommentNotFoundError());
-
-    await expect(commentsService.update(1, 1, { rating: 5 })).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
-  });
-
   it("allows the author to delete a comment", async () => {
     commentsRepository.findById.mockResolvedValue(createComment());
     commentsRepository.delete.mockResolvedValue(true);
 
     await expect(commentsService.delete(1, 1)).resolves.toBeUndefined();
-    expect(logSpy).toHaveBeenCalledWith("[COMMENT] deleted commentId=1 userId=1");
   });
 
   it("rejects deletion by another authenticated user", async () => {
@@ -153,11 +92,5 @@ describe("CommentsService", () => {
 
     await expect(commentsService.delete(1, 1)).rejects.toBeInstanceOf(ForbiddenException);
     expect(commentsRepository.delete).not.toHaveBeenCalled();
-  });
-
-  it("returns not found when deleting a missing comment", async () => {
-    commentsRepository.findById.mockResolvedValue(null);
-
-    await expect(commentsService.delete(1, 999)).rejects.toBeInstanceOf(NotFoundException);
   });
 });

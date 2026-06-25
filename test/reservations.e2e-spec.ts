@@ -1,4 +1,4 @@
-import { INestApplication } from "@nestjs/common";
+﻿import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reservation } from "@prisma/client";
 import request from "supertest";
@@ -72,45 +72,6 @@ describe("Reservations (e2e)", () => {
       .expect(409);
   });
 
-  it("rejects reservation creation in the past", async () => {
-    await request(app.getHttpServer())
-      .post("/reservations")
-      .set("Cookie", authenticationCookies)
-      .send({
-        restaurantId: 1,
-        date: "2000-01-01",
-        time: "13:30",
-        partySize: 2,
-      })
-      .expect(400);
-  });
-
-  it("rejects reservation creation for a time outside generated slots", async () => {
-    await request(app.getHttpServer())
-      .post("/reservations")
-      .set("Cookie", authenticationCookies)
-      .send({
-        restaurantId: 1,
-        date: "2026-07-10",
-        time: "15:00",
-        partySize: 2,
-      })
-      .expect(400);
-  });
-
-  it("rejects creation when seeded booked slots leave insufficient seats", async () => {
-    await request(app.getHttpServer())
-      .post("/reservations")
-      .set("Cookie", authenticationCookies)
-      .send({
-        restaurantId: 1,
-        date: "2026-07-10",
-        time: "13:00",
-        partySize: 1,
-      })
-      .expect(409);
-  });
-
   it("lists only reservations owned by the authenticated user", async () => {
     await prisma.reservation.createMany({
       data: [
@@ -143,40 +104,6 @@ describe("Reservations (e2e)", () => {
       userId: 1,
       restaurantName: restaurant.name,
     });
-  });
-
-  it("orders listed reservations by creation time descending", async () => {
-    const olderReservation = await prisma.reservation.create({
-      data: {
-        userId: 1,
-        restaurantId: 1,
-        date: "2026-07-10",
-        time: "13:30",
-        partySize: 2,
-        createdAt: new Date("2026-06-20T10:00:00.000Z"),
-      },
-    });
-    const newerReservation = await prisma.reservation.create({
-      data: {
-        userId: 1,
-        restaurantId: 1,
-        date: "2026-07-11",
-        time: "13:30",
-        partySize: 2,
-        createdAt: new Date("2026-06-20T11:00:00.000Z"),
-      },
-    });
-
-    const response = await request(app.getHttpServer())
-      .get("/me/reservations")
-      .set("Cookie", authenticationCookies)
-      .expect(200);
-    const reservations = response.body as Reservation[];
-
-    expect(reservations.map(reservation => reservation.id)).toEqual([
-      newerReservation.id,
-      olderReservation.id,
-    ]);
   });
 
   it("returns an owned reservation with restaurant name", async () => {

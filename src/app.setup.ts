@@ -22,7 +22,7 @@ export function configureApplication(app: INestApplication): void {
       exceptionFactory: createValidationException,
     }),
   );
-  
+
   app.useGlobalFilters(new HttpExceptionFilter());
   configureSwagger(app);
 }

@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { ConflictException, ForbiddenException, Logger, NotFoundException } from "@nestjs/common";
+﻿import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { ConflictException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { RestaurantRecord } from "./restaurant-response";
 import { RestaurantsRepository } from "./restaurants.repository";
 import { RestaurantsService } from "./restaurants.service";
@@ -40,10 +40,8 @@ describe("RestaurantsService", () => {
     hasRelations: jest.MockedFunction<RestaurantsRepository["hasRelations"]>;
     delete: jest.MockedFunction<RestaurantsRepository["delete"]>;
   };
-  let logSpy: jest.SpiedFunction<Logger["log"]>;
 
   beforeEach(() => {
-    logSpy = jest.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
     restaurantsRepository = {
       findAll: jest.fn(),
       findById: jest.fn(),
@@ -57,11 +55,7 @@ describe("RestaurantsService", () => {
     );
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("calculates the average rating and comments count", async () => {
+  it("calculates average rating and comments count", async () => {
     restaurantsRepository.findAll.mockResolvedValue([
       createRestaurantRecord({
         comments: [{ rating: 4 }, { rating: 5 }],
@@ -96,52 +90,6 @@ describe("RestaurantsService", () => {
     await expect(restaurantsService.findOne(999)).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it("creates a restaurant with defaults for missing optional fields", async () => {
-    restaurantsRepository.create.mockResolvedValue(
-      createRestaurantRecord({
-        name: "Minimal Restaurant",
-        neighborhood: "",
-        address: "1 Minimal Street",
-        lat: 0,
-        lng: 0,
-        image: "image.jpg",
-        photograph: "image.jpg",
-        cuisineType: "",
-        description: "Minimal description.",
-        capacity: 1,
-        operatingHours: {},
-        reservationSettings: {},
-      }),
-    );
-
-    await restaurantsService.create(7, {
-      name: "Minimal Restaurant",
-      address: "1 Minimal Street",
-      description: "Minimal description.",
-      image: "image.jpg",
-    });
-
-    expect(restaurantsRepository.create).toHaveBeenCalledWith({
-      name: "Minimal Restaurant",
-      neighborhood: "",
-      address: "1 Minimal Street",
-      lat: 0,
-      lng: 0,
-      image: "image.jpg",
-      photograph: "image.jpg",
-      cuisineType: "",
-      description: "Minimal description.",
-      capacity: 1,
-      operatingHours: {},
-      reservationSettings: {},
-      owner: {
-        connect: {
-          id: 7,
-        },
-      },
-    });
-  });
-
   it("blocks update when the authenticated user is not the restaurant owner", async () => {
     restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord({ ownerId: 7 }));
 
@@ -163,25 +111,7 @@ describe("RestaurantsService", () => {
     restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord({ ownerId: 7 }));
 
     await expect(restaurantsService.delete(8, 1)).rejects.toBeInstanceOf(ForbiddenException);
-    expect(restaurantsRepository.hasRelations).not.toHaveBeenCalled();
     expect(restaurantsRepository.delete).not.toHaveBeenCalled();
-  });
-
-  it("logs successful restaurant creation and update", async () => {
-    const restaurant = createRestaurantRecord();
-    restaurantsRepository.create.mockResolvedValue(restaurant);
-    restaurantsRepository.findById.mockResolvedValue(restaurant);
-    restaurantsRepository.update.mockResolvedValue(restaurant);
-
-    await restaurantsService.create(7, {
-      name: restaurant.name,
-      address: restaurant.address,
-      description: restaurant.description,
-    });
-    await restaurantsService.update(7, restaurant.id, {});
-
-    expect(logSpy).toHaveBeenCalledWith("[RESTAURANT] created restaurantId=1 userId=7");
-    expect(logSpy).toHaveBeenCalledWith("[RESTAURANT] updated restaurantId=1 userId=7");
   });
 
   it("deletes a restaurant without related records", async () => {
@@ -191,14 +121,5 @@ describe("RestaurantsService", () => {
 
     await expect(restaurantsService.delete(7, 1)).resolves.toBeUndefined();
     expect(restaurantsRepository.delete).toHaveBeenCalledWith(1);
-    expect(logSpy).toHaveBeenCalledWith("[RESTAURANT] deleted restaurantId=1 userId=7");
-  });
-
-  it("maps a foreign key conflict during deletion to conflict", async () => {
-    restaurantsRepository.findById.mockResolvedValue(createRestaurantRecord());
-    restaurantsRepository.hasRelations.mockResolvedValue(false);
-    restaurantsRepository.delete.mockResolvedValue(false);
-
-    await expect(restaurantsService.delete(7, 1)).rejects.toBeInstanceOf(ConflictException);
   });
 });

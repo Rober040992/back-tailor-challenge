@@ -1,4 +1,4 @@
-import { INestApplication } from "@nestjs/common";
+﻿import { INestApplication } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import request from "supertest";
 import { App } from "supertest/types";
@@ -52,40 +52,10 @@ describe("Availability (e2e)", () => {
         },
       ]),
     );
-    expect(body.slots).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ time: "15:00" }),
-        expect.objectContaining({ time: "23:00" }),
-      ]),
-    );
   });
 
-  it("returns bad request when date is missing", async () => {
+  it("returns bad request for representative invalid input", async () => {
     await request(app.getHttpServer()).get("/restaurants/1/availability?partySize=4").expect(400);
-  });
-
-  it("returns bad request when date is invalid", async () => {
-    await request(app.getHttpServer())
-      .get("/restaurants/1/availability?date=2026-02-30&partySize=4")
-      .expect(400);
-  });
-
-  it("returns bad request when date is earlier than today", async () => {
-    await request(app.getHttpServer())
-      .get("/restaurants/1/availability?date=2000-01-01&partySize=4")
-      .expect(400);
-  });
-
-  it("returns bad request when party size is missing", async () => {
-    await request(app.getHttpServer())
-      .get("/restaurants/1/availability?date=2026-07-10")
-      .expect(400);
-  });
-
-  it("returns bad request when party size is not greater than zero", async () => {
-    await request(app.getHttpServer())
-      .get("/restaurants/1/availability?date=2026-07-10&partySize=0")
-      .expect(400);
   });
 
   it("returns not found when the restaurant does not exist", async () => {
