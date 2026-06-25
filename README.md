@@ -4,7 +4,7 @@
 
 This repository contains the backend REST API for a restaurant reservation application. It is built with NestJS and TypeScript, uses PostgreSQL through Prisma ORM, and authenticates users with JWTs stored in HttpOnly cookies.
 
-The current implementation includes authentication, restaurant CRUD, on-demand availability, reservations, favourites, comments, centralized logging, shared API error handling, Prisma models, and reproducible local seed data.
+The current implementation includes authentication, restaurant CRUD, on-demand availability, reservations, favourites, comments, global rate limiting, centralized logging, shared API error handling, Prisma models, and reproducible local seed data.
 
 > [!NOTE]
 > For all implemented routes, request bodies, responses, validation rules, and Postman instructions, see the [Postman Endpoint Guide](./POSTMAN_ENDPOINTS_GUIDE.md).
@@ -19,6 +19,7 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 | Reservations     | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement                         |
 | Favourites       | Implemented | Authenticated add, owned list, and remove operations                                                                        |
 | Comments         | Implemented | Public listing and authenticated create, owned update, and owned delete operations                                          |
+| Rate limiting    | Implemented | Global HTTP limit of 60 requests per minute per client IP                                                                  |
 | Error handling   | Implemented | Global exception filter and structured validation details                                                                   |
 | Logging          | Implemented | Centralized HTTP, error, and important domain action logs                                                                   |
 | Database seed    | Implemented | Reproducible restaurant, comment, and user seed                                                                             |
@@ -249,6 +250,10 @@ The global exception filter returns one shared shape:
 
 `details` is included when supplied by the exception, including DTO validation failures. Unexpected errors are logged server-side and returned as a generic `500 Internal Server Error` response.
 
+## Rate limiting
+
+All HTTP endpoints share a simple global rate limiter: 60 requests per minute per client IP. Requests above the limit return `429 Too Many Requests` using the standard API error format.
+
 ## Logging
 
 The API uses the built-in NestJS `Logger` and writes logs to the local terminal.
@@ -283,6 +288,7 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 - Database changes use Prisma migrations, and initial data uses a reproducible Prisma seed.
 - Authentication uses a JWT in an HttpOnly cookie instead of database token storage.
 - Registration is public and does not authenticate the newly created user automatically.
+- Rate limiting is handled by a simple in-memory global middleware without persistent storage.
 - The application uses a direct controller/service/repository structure without additional architectural layers.
 - Reservation creation uses a repository-managed serializable transaction while availability rules remain in the service layer.
 - Availability and Reservations share slot calculation without coupling their services.
