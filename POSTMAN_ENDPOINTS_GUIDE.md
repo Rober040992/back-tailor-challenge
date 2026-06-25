@@ -57,6 +57,7 @@ Do not use a Bearer token. Seed users are `roberto`, `lautaro`, `nico`, and `aid
 ```json
 {
   "id": 1,
+  "ownerId": 1,
   "name": "Mission Chinese Food",
   "neighborhood": "Manhattan",
   "address": "171 E Broadway, New York, NY 10002",
@@ -71,12 +72,13 @@ Do not use a Bearer token. Seed users are `roberto`, `lautaro`, `nico`, and `aid
   "reservationSettings": {},
   "averageRating": 4,
   "commentsCount": 3,
+  "canEdit": true,
   "createdAt": "2026-06-21T10:00:00.000Z",
   "updatedAt": "2026-06-21T10:00:00.000Z"
 }
 ```
 
-`averageRating` is calculated from comments and is `null` when there are none.
+`averageRating` is calculated from comments and is `null` when there are none. `canEdit` is `true` only for the authenticated owner.
 
 ### Reservation
 
@@ -136,7 +138,9 @@ Register response:
 {
   "id": 5,
   "email": "new-user@example.com",
-  "username": "new-user"
+  "username": "new-user",
+  "createdAt": "2026-06-21T10:00:00.000Z",
+  "updatedAt": "2026-06-21T10:00:00.000Z"
 }
 ```
 
@@ -178,11 +182,11 @@ If `GET {{baseUrl}}/auth/me` returns `404 Cannot GET /auth/me`, restart the Nest
 
 | Method and URL                     | Access    | Body                    | Success                 | Errors                     |
 | ---------------------------------- | --------- | ----------------------- | ----------------------- | -------------------------- |
-| `GET {{baseUrl}}/restaurants`      | Public    | None                    | `200`, restaurant array | —                          |
+| `GET {{baseUrl}}/restaurants`      | Public    | None                    | `200`, restaurant array | None                       |
 | `GET {{baseUrl}}/restaurants/1`    | Public    | None                    | `200`, restaurant       | `400`, `404`               |
-| `POST {{baseUrl}}/restaurants`     | Protected | Full restaurant JSON    | `201`, restaurant       | `400`, `401`               |
-| `PATCH {{baseUrl}}/restaurants/1`  | Protected | Partial restaurant JSON | `200`, restaurant       | `400`, `401`, `404`        |
-| `DELETE {{baseUrl}}/restaurants/1` | Protected | None                    | `204`                   | `400`, `401`, `404`, `409` |
+| `POST {{baseUrl}}/restaurants`     | Protected | Restaurant JSON         | `201`, restaurant       | `400`, `401`               |
+| `PATCH {{baseUrl}}/restaurants/1`  | Protected | Partial restaurant JSON | `200`, restaurant       | `400`, `401`, `403`, `404` |
+| `DELETE {{baseUrl}}/restaurants/1` | Protected | None                    | `204`                   | `400`, `401`, `403`, `404`, `409` |
 
 Create body:
 
@@ -216,14 +220,14 @@ Create body:
 }
 ```
 
-Create requires every field. Update accepts any subset.
+Create requires only `name`, `address`, and `description`; other fields are optional and receive defaults. Update accepts any subset.
 
-- `lat`: `-90` to `90`.
-- `lng`: `-180` to `180`.
-- `capacity`: integer from `1` to `999`.
+- `lat` and `lng`: numbers.
+- `capacity`: integer.
 - `operatingHours` and `reservationSettings`: objects.
+- `ownerId` is set from the login cookie and is rejected in request bodies.
 - Delete returns `409` when related comments, favourites, or reservations exist.
-- Any authenticated user may mutate restaurants; there is no admin role.
+- Only the owner may update or delete a restaurant; otherwise `403`.
 
 ## Availability
 
@@ -366,7 +370,7 @@ Update body:
 5. Create, list, read, and cancel a reservation.
 6. Add, list, and remove a favourite.
 7. List, create, update, and delete a comment.
-8. Create, update, and delete a restaurant without related records.
+8. Create, update, and delete an owned restaurant without related records.
 9. Logout.
 
 Useful Postman variables:

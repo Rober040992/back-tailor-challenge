@@ -3,7 +3,8 @@ import { BadRequestException, ConflictException, Logger } from "@nestjs/common";
 import { Reservation } from "@prisma/client";
 import { AvailabilityCalculator } from "../availability/availability.calculator";
 import { AvailabilityRestaurantRecord } from "../availability/availability.repository";
-import { ReservationsRepository } from "./reservations.repository";
+import { ReservationRecord, ReservationsRepository } from "./reservations.repository";
+import { ReservationResponse } from "./reservation-response";
 import { ReservationsService } from "./reservations.service";
 
 const reservationSettings = {
@@ -24,7 +25,9 @@ function createRestaurantRecord(
   };
 }
 
-function createReservation(overrides: Partial<Reservation> = {}): Reservation {
+function createReservation(
+  overrides: Partial<Reservation> & { restaurant?: { name: string } } = {},
+): ReservationRecord {
   return {
     id: 1,
     userId: 1,
@@ -36,7 +39,19 @@ function createReservation(overrides: Partial<Reservation> = {}): Reservation {
     createdAt: new Date("2026-06-20T10:00:00.000Z"),
     updatedAt: new Date("2026-06-20T10:00:00.000Z"),
     cancelledAt: null,
+    restaurant: { name: "Mission Chinese Food" },
     ...overrides,
+  };
+}
+
+function createReservationResponse(
+  overrides: Partial<Reservation> & { restaurant?: { name: string } } = {},
+): ReservationResponse {
+  const { restaurant, ...reservation } = createReservation(overrides);
+
+  return {
+    ...reservation,
+    restaurantName: restaurant.name,
   };
 }
 
@@ -49,7 +64,7 @@ describe("ReservationsService", () => {
     cancelConfirmed: jest.MockedFunction<ReservationsRepository["cancelConfirmed"]>;
   };
   let restaurant: AvailabilityRestaurantRecord | null;
-  let createdReservation: Reservation;
+  let createdReservation: ReservationRecord;
   let logSpy: jest.SpiedFunction<Logger["log"]>;
   let warnSpy: jest.SpiedFunction<Logger["warn"]>;
 
@@ -96,7 +111,7 @@ describe("ReservationsService", () => {
         time: "13:30",
         partySize: 2,
       }),
-    ).resolves.toEqual(reservation);
+    ).resolves.toEqual(createReservationResponse());
     expect(reservationsRepository.createWithAvailabilityCheck).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 1,
@@ -165,7 +180,7 @@ describe("ReservationsService", () => {
     const reservations = [createReservation()];
     reservationsRepository.findByUserId.mockResolvedValue(reservations);
 
-    await expect(reservationsService.findMine(1)).resolves.toEqual(reservations);
+    await expect(reservationsService.findMine(1)).resolves.toEqual([createReservationResponse()]);
     expect(reservationsRepository.findByUserId).toHaveBeenCalledWith(1);
   });
 
@@ -176,7 +191,10 @@ describe("ReservationsService", () => {
     ];
     reservationsRepository.findByUserId.mockResolvedValue(reservations);
 
-    await expect(reservationsService.findMine(1)).resolves.toEqual(reservations);
+    await expect(reservationsService.findMine(1)).resolves.toEqual([
+      createReservationResponse({ id: 2, createdAt: new Date("2026-06-20T11:00:00.000Z") }),
+      createReservationResponse({ id: 1, createdAt: new Date("2026-06-20T10:00:00.000Z") }),
+    ]);
   });
 
   it("cancels an owned confirmed reservation and sets cancelledAt", async () => {
@@ -188,7 +206,12 @@ describe("ReservationsService", () => {
     reservationsRepository.findById.mockResolvedValue(confirmedReservation);
     reservationsRepository.cancelConfirmed.mockResolvedValue(cancelledReservation);
 
-    await expect(reservationsService.cancel(1, 1)).resolves.toEqual(cancelledReservation);
+    await expect(reservationsService.cancel(1, 1)).resolves.toEqual(
+      createReservationResponse({
+        status: "cancelled",
+        cancelledAt: new Date("2026-06-20T10:00:00.000Z"),
+      }),
+    );
     expect(reservationsRepository.cancelConfirmed).toHaveBeenCalledWith(
       1,
       new Date("2026-06-20T10:00:00.000Z"),

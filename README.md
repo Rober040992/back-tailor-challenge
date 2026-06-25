@@ -14,7 +14,7 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 | Feature          | Status      | Current state                                                                                                               |
 | ---------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Authentication   | Implemented | Registration, login, current authenticated user, JWT cookie authentication, protected routes, and logout                    |
-| Restaurants CRUD | Implemented | Public reads and authenticated create, update, and delete                                                                   |
+| Restaurants CRUD | Implemented | Public reads, authenticated create, and owner-only update/delete                                                            |
 | Availability     | Implemented | Public, on-demand slot calculation using settings, booked slots, and confirmed reservations                                 |
 | Reservations     | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement                         |
 | Favourites       | Implemented | Authenticated add, owned list, and remove operations                                                                        |
@@ -264,7 +264,8 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 ## Main business rules
 
 - Restaurant ratings are calculated from comments and are not stored as mutable fields.
-- Restaurant mutations require authentication; no admin role exists for the MVP.
+- Restaurant creation requires authentication; update and delete require the authenticated restaurant owner.
+- Restaurant responses include `ownerId` and `canEdit`; `canEdit` is `true` only for the owner.
 - Restaurants with related comments, favourites, or reservations cannot be deleted.
 - Availability is generated on demand from service windows, slot capacity, seeded booked slots, and confirmed reservations.
 - Cancelled reservations release capacity and do not reduce availability.
@@ -285,7 +286,7 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 - The application uses a direct controller/service/repository structure without additional architectural layers.
 - Reservation creation uses a repository-managed serializable transaction while availability rules remain in the service layer.
 - Availability and Reservations share slot calculation without coupling their services.
-- Any authenticated user can mutate restaurants for the MVP; no admin role exists.
+- Restaurants use ownership for update/delete instead of an admin role.
 - Swagger is available locally and can be explicitly enabled in production.
 - Docker remains an optional final improvement.
 
@@ -331,8 +332,8 @@ Generated output was checked against `constitution.back.md`, the active specific
 23. Update it with `PATCH /comments/:commentId`.
 24. Delete it with `DELETE /comments/:commentId`.
 25. Create a restaurant with authenticated `POST /restaurants`.
-26. Update it with authenticated `PATCH /restaurants/:id`.
-27. Delete it with authenticated `DELETE /restaurants/:id`.
+26. Update the same owned restaurant with authenticated `PATCH /restaurants/:id`.
+27. Delete the same owned restaurant with authenticated `DELETE /restaurants/:id`.
 28. Call `POST /auth/logout`.
 29. Run `npm run test`, `npm run test:e2e`, and `npm run build`.
 

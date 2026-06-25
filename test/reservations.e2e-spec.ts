@@ -34,6 +34,8 @@ describe("Reservations (e2e)", () => {
   });
 
   it("creates a confirmed reservation when the slot has enough available seats", async () => {
+    const restaurant = await findRestaurantName(prisma, 1);
+
     const response = await request(app.getHttpServer())
       .post("/reservations")
       .set("Cookie", authenticationCookies)
@@ -47,6 +49,7 @@ describe("Reservations (e2e)", () => {
 
     expect(response.body).toMatchObject({
       restaurantId: 1,
+      restaurantName: restaurant.name,
       userId: 1,
       date: "2026-07-10",
       time: "13:30",
@@ -132,10 +135,14 @@ describe("Reservations (e2e)", () => {
       .get("/me/reservations")
       .set("Cookie", authenticationCookies)
       .expect(200);
-    const reservations = response.body as Reservation[];
+    const reservations = response.body as Array<Reservation & { restaurantName: string }>;
+    const restaurant = await findRestaurantName(prisma, 1);
 
     expect(reservations).toHaveLength(1);
-    expect(reservations[0]).toMatchObject({ userId: 1 });
+    expect(reservations[0]).toMatchObject({
+      userId: 1,
+      restaurantName: restaurant.name,
+    });
   });
 
   it("orders listed reservations by creation time descending", async () => {
@@ -172,8 +179,26 @@ describe("Reservations (e2e)", () => {
     ]);
   });
 
+  it("returns an owned reservation with restaurant name", async () => {
+    const reservation = await createReservation(prisma);
+    const restaurant = await findRestaurantName(prisma, 1);
+
+    const response = await request(app.getHttpServer())
+      .get(`/reservations/${reservation.id}`)
+      .set("Cookie", authenticationCookies)
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      id: reservation.id,
+      userId: 1,
+      restaurantId: 1,
+      restaurantName: restaurant.name,
+    });
+  });
+
   it("cancels an owned confirmed reservation and sets cancelledAt", async () => {
     const reservation = await createReservation(prisma);
+    const restaurant = await findRestaurantName(prisma, 1);
 
     const response = await request(app.getHttpServer())
       .patch(`/reservations/${reservation.id}/cancel`)
@@ -184,6 +209,7 @@ describe("Reservations (e2e)", () => {
     expect(responseBody).toMatchObject({
       id: reservation.id,
       userId: 1,
+      restaurantName: restaurant.name,
       status: "cancelled",
     });
     expect(responseBody.cancelledAt).not.toBeNull();
@@ -220,5 +246,15 @@ function createReservation(
       partySize: 2,
       ...overrides,
     },
+  });
+}
+
+function findRestaurantName(
+  prisma: PrismaService,
+  restaurantId: number,
+): Promise<{ name: string }> {
+  return prisma.restaurant.findUniqueOrThrow({
+    where: { id: restaurantId },
+    select: { name: true },
   });
 }

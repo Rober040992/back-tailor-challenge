@@ -50,6 +50,7 @@ Reservation response:
 {
   "id": 1,
   "restaurantId": 1,
+  "restaurantName": "Mission Chinese Food",
   "userId": 1,
   "date": "2026-07-10",
   "time": "13:30",
@@ -63,6 +64,7 @@ Reservation response:
 
 `GET /me/reservations` returns an array of reservation responses.
 Reservations are ordered by `createdAt` descending, newest first.
+Reservation responses include the current restaurant name from `Restaurant.name`.
 
 `PATCH /reservations/:reservationId/cancel` returns the complete updated reservation response with `status: "cancelled"` and `cancelledAt` set to the current DateTime.
 
@@ -77,6 +79,7 @@ Success status codes:
 
 * A reservation belongs to one restaurant and one user.
 * A reservation can only be created for the authenticated user.
+* `restaurantName` is returned from the related restaurant and is not accepted in request input.
 * A reservation cannot be created in the past using UTC as the application timezone.
 * Reservation `date` must be stored as `YYYY-MM-DD`.
 * Reservation `time` must be stored as `HH:MM`.
@@ -135,5 +138,6 @@ Success status codes:
 * Rejects creation when seeded booked slots leave insufficient seats.
 * Lists only reservations owned by the authenticated user.
 * Orders listed reservations by creation time descending.
+* Returns `restaurantName` in reservation responses.
 * Cancels an owned confirmed reservation and sets `cancelledAt`.
 * Returns `409 Conflict` when cancelling an already cancelled reservation.

@@ -11,6 +11,9 @@ export class ReservationResponse {
   @ApiProperty({ example: 1 })
   restaurantId!: number;
 
+  @ApiProperty({ example: "Mission Chinese Food" })
+  restaurantName!: string;
+
   @ApiProperty({ example: "2026-07-10" })
   date!: string;
 

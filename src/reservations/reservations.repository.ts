@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma, Reservation } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { AvailabilityRestaurantRecord } from "../availability/availability.repository";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -9,6 +9,28 @@ export class ReservationTransactionConflictError extends Error {}
 
 type AvailabilityCheck = (restaurant: AvailabilityRestaurantRecord | null) => void;
 
+const reservationResponseSelect = {
+  id: true,
+  userId: true,
+  restaurantId: true,
+  date: true,
+  time: true,
+  partySize: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  cancelledAt: true,
+  restaurant: {
+    select: {
+      name: true,
+    },
+  },
+} satisfies Prisma.ReservationSelect;
+
+export type ReservationRecord = Prisma.ReservationGetPayload<{
+  select: typeof reservationResponseSelect;
+}>;
+
 @Injectable()
 export class ReservationsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -16,7 +38,7 @@ export class ReservationsRepository {
   async createWithAvailabilityCheck(
     data: Prisma.ReservationUncheckedCreateInput,
     checkAvailability: AvailabilityCheck,
-  ): Promise<Reservation> {
+  ): Promise<ReservationRecord> {
     for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
       try {
         return await this.prisma.$transaction(
@@ -43,6 +65,7 @@ export class ReservationsRepository {
 
             return transaction.reservation.create({
               data,
+              select: reservationResponseSelect,
             });
           },
           {
@@ -66,22 +89,24 @@ export class ReservationsRepository {
     throw new ReservationTransactionConflictError();
   }
 
-  findByUserId(userId: number): Promise<Reservation[]> {
+  findByUserId(userId: number): Promise<ReservationRecord[]> {
     return this.prisma.reservation.findMany({
       where: { userId },
       orderBy: {
         createdAt: "desc",
       },
+      select: reservationResponseSelect,
     });
   }
 
-  findById(id: number): Promise<Reservation | null> {
+  findById(id: number): Promise<ReservationRecord | null> {
     return this.prisma.reservation.findUnique({
       where: { id },
+      select: reservationResponseSelect,
     });
   }
 
-  async cancelConfirmed(id: number, cancelledAt: Date): Promise<Reservation | null> {
+  async cancelConfirmed(id: number, cancelledAt: Date): Promise<ReservationRecord | null> {
     const result = await this.prisma.reservation.updateMany({
       where: {
         id,

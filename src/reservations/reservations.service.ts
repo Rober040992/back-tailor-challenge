@@ -6,11 +6,11 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common";
-import { Reservation } from "@prisma/client";
 import { AvailabilityCalculator } from "../availability/availability.calculator";
 import { logSafely } from "../common/logging/safe-logger";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
 import {
+  ReservationRecord,
   ReservationsRepository,
   ReservationTransactionConflictError,
 } from "./reservations.repository";
@@ -80,7 +80,7 @@ export class ReservationsService {
         `[RESERVATION] created reservationId=${reservation.id} restaurantId=${reservation.restaurantId} userId=${userId} date=${reservation.date} time=${reservation.time} partySize=${reservation.partySize}`,
       );
 
-      return reservation;
+      return this.toReservationResponse(reservation);
     } catch (error) {
       if (error instanceof ReservationTransactionConflictError) {
         this.logCapacityConflict(userId, createReservationDto);
@@ -91,12 +91,16 @@ export class ReservationsService {
     }
   }
 
-  findMine(userId: number): Promise<ReservationResponse[]> {
-    return this.reservationsRepository.findByUserId(userId);
+  async findMine(userId: number): Promise<ReservationResponse[]> {
+    const reservations = await this.reservationsRepository.findByUserId(userId);
+
+    return reservations.map(reservation => this.toReservationResponse(reservation));
   }
 
   async findOne(userId: number, reservationId: number): Promise<ReservationResponse> {
-    return this.findOwnedReservation(userId, reservationId);
+    const reservation = await this.findOwnedReservation(userId, reservationId);
+
+    return this.toReservationResponse(reservation);
   }
 
   async cancel(userId: number, reservationId: number): Promise<ReservationResponse> {
@@ -121,7 +125,7 @@ export class ReservationsService {
       `[RESERVATION] cancelled reservationId=${cancelledReservation.id} restaurantId=${cancelledReservation.restaurantId} userId=${userId}`,
     );
 
-    return cancelledReservation;
+    return this.toReservationResponse(cancelledReservation);
   }
 
   private logCapacityConflict(
@@ -136,7 +140,10 @@ export class ReservationsService {
     );
   }
 
-  private async findOwnedReservation(userId: number, reservationId: number): Promise<Reservation> {
+  private async findOwnedReservation(
+    userId: number,
+    reservationId: number,
+  ): Promise<ReservationRecord> {
     const reservation = await this.reservationsRepository.findById(reservationId);
 
     if (!reservation) {
@@ -148,6 +155,15 @@ export class ReservationsService {
     }
 
     return reservation;
+  }
+
+  private toReservationResponse(reservation: ReservationRecord): ReservationResponse {
+    const { restaurant, ...reservationFields } = reservation;
+
+    return {
+      ...reservationFields,
+      restaurantName: restaurant.name,
+    };
   }
 
   private validateNotInPast(date: string, time: string): void {
