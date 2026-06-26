@@ -34,12 +34,23 @@ import { JwtAuthGuard } from "./jwt/jwt-auth.guard";
 
 const ACCESS_TOKEN_COOKIE = "access_token";
 const ACCESS_TOKEN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-const ACCESS_TOKEN_COOKIE_OPTIONS = {
-  httpOnly: true,
-  maxAge: ACCESS_TOKEN_MAX_AGE_MS,
-  sameSite: "lax" as const,
-  secure: false,
-};
+
+function getAccessTokenCookieSecurityOptions() {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  return {
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    secure: isProduction,
+  };
+}
+
+function getAccessTokenCookieOptions() {
+  return {
+    httpOnly: true,
+    maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+    ...getAccessTokenCookieSecurityOptions(),
+  };
+}
 
 interface AuthenticatedRequest extends Request {
   user: PublicUser;
@@ -79,7 +90,7 @@ export class AuthController {
   ): Promise<{ id: number; username: string }> {
     const result = await this.authService.login(loginDto);
 
-    response.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+    response.cookie(ACCESS_TOKEN_COOKIE, result.accessToken, getAccessTokenCookieOptions());
 
     return result.user;
   }
@@ -110,8 +121,7 @@ export class AuthController {
   ): void {
     response.clearCookie(ACCESS_TOKEN_COOKIE, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: false,
+      ...getAccessTokenCookieSecurityOptions(),
     });
     logSafely(this.logger, "log", `[AUTH] logout userId=${request.user.id}`);
   }

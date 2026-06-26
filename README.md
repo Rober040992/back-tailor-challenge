@@ -109,11 +109,13 @@ Copy `.env.example` to `.env` and replace the placeholders:
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/DATABASE_NAME_HERE?schema=public"
 JWT_SECRET="replace-with-a-safe-local-secret"
 PORT=3000
-SWAGGER_ENABLED=false
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3001
+SWAGGER_ENABLED=true
 ```
 
 > [!IMPORTANT]
-> `DATABASE_URL` and `JWT_SECRET` are required. `PORT` is optional and defaults to `3000`. Swagger is always enabled outside production. In production, set `SWAGGER_ENABLED=true` to expose it.
+> `DATABASE_URL` and `JWT_SECRET` are required. `PORT` is optional and defaults to `3000`. `FRONTEND_URL` must match the frontend origin for credentialed CORS. Swagger is always enabled outside production. In production, set `SWAGGER_ENABLED=true` to expose it.
 
 Do not commit `.env` or real credentials.
 
@@ -289,6 +291,30 @@ Stop containers and delete the Docker database volume:
 npm run docker:down:volumes
 ```
 
+## Railway deployment
+
+Railway deploys the backend using the existing `Dockerfile`. `docker-compose.yml` is only for local development and should not be used for Railway.
+
+Railway PostgreSQL provides `DATABASE_URL`. Configure these Railway variables:
+
+```txt
+DATABASE_URL
+JWT_SECRET
+NODE_ENV=production
+FRONTEND_URL
+SWAGGER_ENABLED=true
+```
+
+Set the Railway Pre-Deploy Command to:
+
+```bash
+npm run railway:predeploy
+```
+
+The predeploy command runs Prisma migrations and then runs the seed. The seed runs on every deploy and resets the sample data in the Railway database.
+
+When the frontend is deployed to Vercel, set `FRONTEND_URL` to the Vercel frontend URL. With `SWAGGER_ENABLED=true`, Swagger is available in production at `/docs` and `/docs-json`. Production cookies use `SameSite=None` and `Secure=true`; local cookies use `SameSite=Lax` and `Secure=false`.
+
 ## Tests and quality checks
 
 ```bash
@@ -309,7 +335,7 @@ The e2e tests use the configured PostgreSQL database and expect the seed users a
 Authentication uses a JWT stored in the `access_token` HttpOnly cookie. Tokens expire after 24 hours, are not stored in the database, and are cleared on logout. Registration creates a user account without creating a JWT or authentication cookie.
 
 > [!CAUTION]
-> The local cookie uses `SameSite=Lax` and `Secure=false`. This configuration is intended for local HTTP development and must not be used unchanged in production.
+> Local cookies use `SameSite=Lax` and `Secure=false`. Production cookies use `SameSite=None` and `Secure=true` when `NODE_ENV=production`.
 
 The seed creates four users with password `12345`:
 
@@ -412,10 +438,7 @@ Generated output was checked against `constitution.back.md`, the active specific
 
 - The e2e tests depend on a configured and seeded local database.
 - Frontend integration is not included in this repository.
-- The local authentication cookie is not configured for HTTPS production use.
-- Swagger is disabled by default when `NODE_ENV=production`.
-- Docker configuration is not available.
-- Production deployment configuration is not included.
+- Swagger is available in production when `SWAGGER_ENABLED=true`.
 
 ## Local verification flow
 
