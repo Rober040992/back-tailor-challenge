@@ -436,9 +436,7 @@ HTTP logs include the method, path, status, duration, and authenticated user whe
 
 ## AI usage notes
 
-AI/Codex was used as an implementation assistant for specifications, prompts, planning, documentation, and implementation support. The developer reviewed the resulting code, API contracts, errors, and business rules.
-
-Generated output was checked against `constitution.back.md`, the active specifications, and the repository source. Invented endpoints, unrelated refactors, overengineering, payments, admin roles, and premature Docker or Swagger work were rejected or avoided.
+Detailed AI usage notes are kept in [AI_USAGE.md](./AI_USAGE.md).
 
 ## Current limitations
 
