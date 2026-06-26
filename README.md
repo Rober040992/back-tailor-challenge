@@ -295,6 +295,12 @@ npm run docker:down:volumes
 
 Railway deploys the backend using the existing `Dockerfile`. `docker-compose.yml` is only for local development and should not be used for Railway.
 
+The deployed Railway backend is available at:
+
+```txt
+https://back-tailor-challenge-production.up.railway.app
+```
+
 Railway PostgreSQL provides `DATABASE_URL`. Configure these Railway variables:
 
 ```txt
