@@ -169,6 +169,8 @@ By default, the API is available at:
 http://localhost:3000
 ```
 
+The backend local port is `3000`. If startup fails with `EADDRINUSE: address already in use 0.0.0.0:3000`, another local process is already using that port. Stop the process using port `3000`, then start the backend again.
+
 Swagger documentation is available locally at:
 
 ```txt
@@ -176,16 +178,37 @@ http://localhost:3000/docs
 http://localhost:3000/docs-json
 ```
 
-Other available scripts include:
+### Backend script reference
 
-```bash
-npm run start
-npm run start:debug
-npm run build
-npm run start:prod
-```
+These scripts match the current `package.json`:
 
-Run `npm run build` before `npm run start:prod`.
+| Script | Purpose |
+| --- | --- |
+| `npm run start` | Starts the NestJS API once with `nest start`. |
+| `npm run start:dev` | Starts the API in watch mode for local development. |
+| `npm run start:debug` | Starts the API in watch and debug mode. |
+| `npm run build` | Builds the compiled NestJS application. |
+| `npm run start:prod` | Runs the compiled application with Node. Run `npm run build` first. |
+| `npm run format` | Formats source and test TypeScript files with Prettier. |
+| `npm run seed` | Runs the Prisma seed. |
+| `npm run lint` | Runs ESLint with automatic fixes. |
+| `npm run test` | Runs the Jest unit test suite. |
+| `npm run test:watch` | Runs Jest in watch mode. |
+| `npm run test:cov` | Runs Jest with coverage. |
+| `npm run test:debug` | Runs Jest in debug mode. |
+| `npm run test:e2e` | Runs the e2e test suite. |
+| `npm run knip` | Runs Knip unused code checks. |
+| `npm run docker:config` | Validates the Docker Compose configuration. |
+| `npm run docker:build` | Builds the backend Docker image through Compose. |
+| `npm run docker:up` | Starts existing Docker Compose services in the background. |
+| `npm run docker:up:build` | Builds and starts Docker Compose services in the background. |
+| `npm run docker:ps` | Shows Docker Compose service status. |
+| `npm run docker:logs` | Follows backend container logs. |
+| `npm run docker:migrate` | Applies Prisma migrations inside the backend container. |
+| `npm run docker:seed` | Runs the Prisma seed inside the backend container. |
+| `npm run docker:down` | Stops Docker Compose services and keeps volumes. |
+| `npm run docker:down:volumes` | Stops Docker Compose services and deletes volumes. |
+| `npm run railway:predeploy` | Runs the Railway pre-deploy migration and seed command. |
 
 ## Running with Docker
 
