@@ -19,7 +19,7 @@ The current implementation includes authentication, restaurant CRUD, on-demand a
 | Reservations     | Implemented | Authenticated creation, owned list and detail, cancellation, and transactional capacity enforcement                         |
 | Favourites       | Implemented | Authenticated add, owned list, and remove operations                                                                        |
 | Comments         | Implemented | Public listing and authenticated create, owned update, and owned delete operations                                          |
-| Rate limiting    | Implemented | Global HTTP limit of 60 requests per minute per client IP                                                                  |
+| Rate limiting    | Implemented | Global HTTP limit of 30 requests per minute per client IP with a 2-minute penalty                                          |
 | Error handling   | Implemented | Global exception filter and structured validation details                                                                   |
 | Logging          | Implemented | Centralized HTTP, error, and important domain action logs                                                                   |
 | Database seed    | Implemented | Reproducible restaurant, comment, and user seed                                                                             |
@@ -414,7 +414,7 @@ The global exception filter returns one shared shape:
 
 ## Rate limiting
 
-All HTTP endpoints share a simple global rate limiter: 60 requests per minute per client IP. Requests above the limit return `429 Too Many Requests` using the standard API error format.
+All HTTP endpoints share a simple global rate limiter: 30 requests per minute per client IP. Request 31 starts a 2-minute penalty for that IP. Requests during the penalty return `429 Too Many Requests` with a `Retry-After` header and do not extend the penalty.
 
 ## Logging
 
